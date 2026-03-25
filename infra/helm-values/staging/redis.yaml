@@ -1,0 +1,9 @@
+cluster:
+  masters: 3
+  replicas: 3
+resources:
+  requests: { cpu: "250m", memory: "256Mi" }
+  limits: { cpu: "500m", memory: "512Mi" }
+persistence:
+  size: 10Gi
+maxmemory: 256mb

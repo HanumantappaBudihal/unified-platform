@@ -1,0 +1,98 @@
+---
+# ApplicationSet: deploys all platform services across dev/staging/prod
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: idp-platform-services
+  namespace: argocd
+spec:
+  generators:
+    - matrix:
+        generators:
+          # Environments
+          - list:
+              elements:
+                - env: dev
+                  namespace: idp-dev
+                - env: staging
+                  namespace: idp-staging
+                - env: prod
+                  namespace: idp-prod
+          # Services
+          - list:
+              elements:
+                - service: postgres
+                  chart: infra/helm/postgres
+                - service: redis
+                  chart: infra/helm/redis
+                - service: kafka
+                  chart: infra/helm/kafka
+                - service: minio
+                  chart: infra/helm/minio
+                - service: keycloak
+                  chart: infra/helm/keycloak
+                - service: opa
+                  chart: infra/helm/opa
+                - service: kong
+                  chart: infra/helm/kong
+                - service: platform-api
+                  chart: infra/helm/platform-api
+                - service: portal
+                  chart: infra/helm/portal
+  template:
+    metadata:
+      name: '{{service}}-{{env}}'
+      namespace: argocd
+      labels:
+        environment: '{{env}}'
+        service: '{{service}}'
+    spec:
+      project: idp-platform
+      source:
+        repoURL: https://github.com/your-org/general-servers.git
+        targetRevision: HEAD
+        path: '{{chart}}'
+        helm:
+          valueFiles:
+            - ../../infra/helm-values/{{env}}/{{service}}.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+---
+# Monitoring stack - single instance (not per-environment)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: idp-platform
+  source:
+    repoURL: https://github.com/your-org/general-servers.git
+    targetRevision: HEAD
+    path: infra/helm/monitoring
+    helm:
+      valueFiles:
+        - ../../infra/helm-values/monitoring.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: idp-monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

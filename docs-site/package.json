@@ -1,0 +1,17 @@
+{
+  "name": "@idp/docs",
+  "version": "1.0.0",
+  "description": "IDP Platform Documentation",
+  "scripts": {
+    "dev": "next dev -p 3030",
+    "build": "next build",
+    "start": "next start -p 3030"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "nextra": "^2.13.4",
+    "nextra-theme-docs": "^2.13.4",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  }
+}

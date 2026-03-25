@@ -1,0 +1,48 @@
+# Multi-Environment
+
+The platform supports three environments: **dev**, **staging**, and **prod**. Each environment gets isolated resources with separate credentials.
+
+## Environment Isolation
+
+| Service | Isolation Strategy |
+|---------|-------------------|
+| PostgreSQL | `{app}_{env}_db` — separate database per env |
+| Redis | `{env}:{app}:*` — ACL-enforced key prefix |
+| Kafka | `{env}.{app}.topic` — separate topics |
+| MinIO | `{env}-{app}` — separate bucket |
+| Kong | `/api/{env}/{app}/*` — separate routes |
+| Keycloak | `{app}-{env}` — separate OIDC client |
+
+## Promotion Pipeline
+
+Promotion creates resources in the target environment using the same configuration as the source but with new credentials.
+
+```
+dev → staging → prod
+```
+
+### Via Portal
+
+Navigate to **Apps → [Your App] → Environments** and click the **Promote** button.
+
+### Via CLI
+
+```bash
+platform env promote staging --app my-service --from dev
+platform env promote prod --app my-service --from staging
+```
+
+### Via API
+
+```bash
+curl -X POST http://localhost:3020/api/v1/apps/my-service/promote/staging \
+  -H 'Content-Type: application/json' \
+  -d '{"sourceEnvironment": "dev"}'
+```
+
+## Validation Rules
+
+- Promotion must go forward: `dev → staging → prod`
+- Backward promotion (e.g., prod → dev) is blocked
+- If target already has resources, pass `"force": true` to re-provision
+- Source must have at least one data resource to promote

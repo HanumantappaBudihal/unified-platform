@@ -1,0 +1,30 @@
+image:
+  repository: postgres
+  tag: "16-alpine"
+  pullPolicy: IfNotPresent
+
+auth:
+  postgresPassword: "postgres-admin-secret"
+  platformDbPassword: "platform-db-secret"
+
+storage:
+  size: 50Gi
+  storageClass: ""
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+
+config:
+  maxConnections: 200
+  sharedBuffers: "256MB"
+  effectiveCacheSize: "1GB"
+
+backup:
+  enabled: true
+  schedule: "0 1 * * *"
+  retentionDays: 30

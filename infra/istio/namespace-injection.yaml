@@ -1,0 +1,33 @@
+---
+# Enable Istio sidecar injection on platform namespaces
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: idp-dev
+  labels:
+    istio-injection: enabled
+    environment: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: idp-staging
+  labels:
+    istio-injection: enabled
+    environment: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: idp-prod
+  labels:
+    istio-injection: enabled
+    environment: prod
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: idp-monitoring
+  labels:
+    istio-injection: enabled
+    environment: monitoring

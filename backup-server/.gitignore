@@ -1,0 +1,14 @@
+# Backup data (large, regeneratable)
+backups/
+
+# Environment (contains secrets — never commit!)
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

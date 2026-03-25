@@ -1,0 +1,204 @@
+services:
+  # ─── Kong Database (PostgreSQL) ───
+  kong-db:
+    image: postgres:16-alpine
+    container_name: kong-db
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD:-kong-db-secret}
+    volumes:
+      - kong-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kong-internal
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
+
+  # ─── Kong Database Bootstrap (run once) ───
+  kong-migrations:
+    image: kong/kong-gateway:3.9
+    container_name: kong-migrations
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong-db-secret}
+      KONG_PG_DATABASE: kong
+    depends_on:
+      kong-db:
+        condition: service_healthy
+    networks:
+      - kong-internal
+    restart: on-failure
+
+  # ─── Kong API Gateway ───
+  kong:
+    image: kong/kong-gateway:3.9
+    container_name: kong
+    environment:
+      # Database
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong-db-secret}
+      KONG_PG_DATABASE: kong
+      # Proxy
+      KONG_PROXY_LISTEN: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      # Admin API
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      # SSL Certificates
+      KONG_SSL_CERT: /etc/kong/certs/server.crt
+      KONG_SSL_CERT_KEY: /etc/kong/certs/server.key
+      KONG_ADMIN_SSL_CERT: /etc/kong/certs/server.crt
+      KONG_ADMIN_SSL_CERT_KEY: /etc/kong/certs/server.key
+      # Plugins
+      KONG_PLUGINS: bundled
+      # Status
+      KONG_STATUS_LISTEN: "0.0.0.0:8100"
+      # Logging
+      KONG_LOG_LEVEL: info
+      # Declarative fallback (if needed)
+      # KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+    ports:
+      - "${KONG_PROXY_PORT:-8000}:8000"       # HTTP proxy
+      - "${KONG_PROXY_SSL_PORT:-8443}:8443"   # HTTPS proxy
+      - "${KONG_ADMIN_PORT:-8001}:8001"       # Admin API
+      - "${KONG_ADMIN_SSL_PORT:-8444}:8444"   # Admin API HTTPS
+    volumes:
+      - ../certs/nginx/server.crt:/etc/kong/certs/server.crt:ro
+      - ../certs/nginx/server.key:/etc/kong/certs/server.key:ro
+    depends_on:
+      kong-db:
+        condition: service_healthy
+      kong-migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - kong-internal
+      - kong-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+
+  # ─── Konga — Kong Admin UI ───
+  konga:
+    image: pantsel/konga:latest
+    container_name: konga
+    environment:
+      NODE_ENV: production
+      TOKEN_SECRET: ${KONGA_TOKEN_SECRET:-konga-token-secret-change-me}
+      DB_ADAPTER: postgres
+      DB_HOST: kong-db
+      DB_PORT: 5432
+      DB_USER: kong
+      DB_PASSWORD: ${KONG_PG_PASSWORD:-kong-db-secret}
+      DB_DATABASE: konga
+    ports:
+      - "${KONGA_PORT:-1337}:1337"
+    depends_on:
+      kong:
+        condition: service_healthy
+    networks:
+      - kong-internal
+      - kong-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
+
+  # ─── Prometheus (Kong Metrics) ───
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kong-prometheus
+    ports:
+      - "${KONG_PROMETHEUS_PORT:-9098}:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - kong-internal
+    depends_on:
+      kong:
+        condition: service_healthy
+    profiles:
+      - monitoring
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+    restart: unless-stopped
+
+  # ─── Grafana (Kong Dashboards) ───
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kong-grafana
+    ports:
+      - "${KONG_GRAFANA_PORT:-3011}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - kong-internal
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
+
+volumes:
+  kong-db-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  kong-internal:
+    driver: bridge
+  kong-network:
+    driver: bridge
+    name: kong-network

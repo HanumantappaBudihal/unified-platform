@@ -1,0 +1,67 @@
+# Platform API Reference
+
+Base URL: `http://localhost:3020`
+
+## Apps
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/apps` | List all apps |
+| `GET` | `/api/v1/apps/:slug` | Get app details + resources |
+| `POST` | `/api/v1/apps` | Register new app |
+| `DELETE` | `/api/v1/apps/:slug` | Decommission app |
+| `POST` | `/api/v1/apps/:slug/onboard` | Provision all resources |
+| `POST` | `/api/v1/apps/:slug/resources` | Add a specific resource |
+| `DELETE` | `/api/v1/apps/:slug/resources/:type` | Remove a resource |
+
+## Environments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/apps/:slug/environments` | Get environment status |
+| `POST` | `/api/v1/apps/:slug/promote/:env` | Promote to environment |
+| `GET` | `/api/v1/environments` | List all environments |
+
+## Teams
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/teams` | List teams |
+| `POST` | `/api/v1/teams` | Create team |
+| `POST` | `/api/v1/teams/:slug/members` | Add team member |
+
+## Audit
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/audit` | Get audit log |
+
+## Health
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/health` | Aggregated service health |
+
+---
+
+## Example: Full Onboarding
+
+```bash
+# 1. Register
+curl -X POST http://localhost:3020/api/v1/apps \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Payment Service", "ownerId": "user1", "description": "Handles payments"}'
+
+# 2. Onboard
+curl -X POST http://localhost:3020/api/v1/apps/payment-service/onboard \
+  -H 'Content-Type: application/json' \
+  -d '{"resources": ["postgres", "redis", "kafka", "minio"], "environment": "dev"}'
+
+# 3. Check status
+curl http://localhost:3020/api/v1/apps/payment-service
+
+# 4. Promote to staging
+curl -X POST http://localhost:3020/api/v1/apps/payment-service/promote/staging \
+  -H 'Content-Type: application/json' \
+  -d '{"sourceEnvironment": "dev"}'
+```

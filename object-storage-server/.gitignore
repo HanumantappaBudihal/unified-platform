@@ -1,0 +1,9 @@
+node_modules/
+.next/
+data/
+portal/.next/
+portal/node_modules/
+mock-apps/*/node_modules/
+*.log
+.env
+.env.local

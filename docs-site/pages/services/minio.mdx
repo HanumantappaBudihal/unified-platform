@@ -1,0 +1,40 @@
+# MinIO
+
+4-node MinIO cluster for S3-compatible object storage.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| API | `http://localhost:9000` |
+| Console | `http://localhost:9001` |
+| Version | Latest |
+
+## Per-App Isolation
+
+Each onboarded app gets:
+- Bucket: `{env}-{app}`
+- Versioning enabled
+- IAM policy restricting access to own bucket + read-only `shared` bucket
+
+## Usage
+
+```javascript
+import { Client } from 'minio';
+
+const minio = new Client({
+  endPoint: process.env.MINIO_ENDPOINT,
+  port: parseInt(process.env.MINIO_PORT),
+  useSSL: false,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY,
+});
+
+await minio.putObject(process.env.MINIO_BUCKET, 'uploads/file.txt', buffer);
+```
+
+## Backups
+
+- **Schedule:** Daily at 2:00 AM
+- **Retention:** 30 days
+- **Method:** `mc mirror` to backup volume

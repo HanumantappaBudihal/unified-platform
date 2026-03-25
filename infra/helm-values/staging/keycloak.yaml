@@ -1,0 +1,5 @@
+replicas: 1
+production: true
+resources:
+  requests: { memory: "512Mi", cpu: "500m" }
+  limits: { memory: "2Gi", cpu: "1" }

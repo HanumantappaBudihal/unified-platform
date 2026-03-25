@@ -1,0 +1,43 @@
+replicaCount: 3
+
+image:
+  repository: apache/kafka
+  tag: "3.9.0"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "500m"
+  limits:
+    memory: "4Gi"
+    cpu: "2"
+
+storage:
+  size: 50Gi
+  storageClass: ""
+
+config:
+  autoCreateTopics: "false"
+  defaultPartitions: 3
+  defaultReplicationFactor: 3
+  logRetentionHours: 168
+  minInsyncReplicas: 2
+  clusterId: "MkU3OEVBNTcwNTJENDM2Qk"
+
+jmx:
+  enabled: true
+  port: 7071
+
+exporter:
+  enabled: true
+  image:
+    repository: danielqsj/kafka-exporter
+    tag: "v1.7.0"
+
+service:
+  type: ClusterIP
+  port: 9092
+
+networkPolicy:
+  enabled: true

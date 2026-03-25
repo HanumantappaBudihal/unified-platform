@@ -1,0 +1,36 @@
+# Kafka
+
+3-node KRaft cluster (no ZooKeeper) for event streaming.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| Brokers | `kafka-1:9092`, `kafka-2:9092`, `kafka-3:9092` |
+| Version | 3.9.0 |
+| Mode | KRaft (no ZooKeeper) |
+| Auto-create topics | Disabled |
+
+## Per-App Topics
+
+Each onboarded app gets:
+- `{env}.{app}.events` (3 partitions, 7-day retention)
+- `{env}.{app}.events.dlq` (1 partition, 30-day retention)
+- `{env}.{app}.commands` (3 partitions, 7-day retention)
+- `{env}.{app}.commands.dlq` (1 partition, 30-day retention)
+
+## Adding Custom Topics
+
+```bash
+platform resources add kafka --app my-service
+# Or via API:
+curl -X POST http://localhost:3020/api/v1/apps/my-service/resources \
+  -H 'Content-Type: application/json' \
+  -d '{"resourceType": "kafka", "environment": "dev"}'
+```
+
+## Monitoring
+
+- Kafka UI at `http://localhost:8080` (event-streaming portal)
+- Prometheus + Grafana dashboards
+- Alerts for consumer lag, under-replicated partitions

@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-kong
+  labels:
+    app: kong
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: kong
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: kong
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: kong
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KONG_DATABASE
+              value: {{ .Values.database | quote }}
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:{{ .Values.proxy.httpPort }}, 0.0.0.0:{{ .Values.proxy.httpsPort }} ssl"
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:{{ .Values.admin.port }}"
+            - name: KONG_STATUS_LISTEN
+              value: "0.0.0.0:{{ .Values.metrics.port }}"
+            - name: KONG_DECLARATIVE_CONFIG
+              value: "/kong/config/kong.yml"
+            - name: KONG_PROXY_ACCESS_LOG
+              value: "/dev/stdout"
+            - name: KONG_ADMIN_ACCESS_LOG
+              value: "/dev/stdout"
+            - name: KONG_PROXY_ERROR_LOG
+              value: "/dev/stderr"
+            - name: KONG_ADMIN_ERROR_LOG
+              value: "/dev/stderr"
+          ports:
+            - name: proxy
+              containerPort: {{ .Values.proxy.httpPort }}
+              protocol: TCP
+            - name: proxy-ssl
+              containerPort: {{ .Values.proxy.httpsPort }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.admin.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: kong-config
+              mountPath: /kong/config
+              readOnly: true
+      volumes:
+        - name: kong-config
+          configMap:
+            name: {{ .Release.Name }}-kong-config

@@ -1,0 +1,105 @@
+groups:
+  - name: redis-critical
+    rules:
+      - alert: RedisClusterDown
+        expr: redis_cluster_state != 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis cluster is down"
+          description: "Redis cluster state is not OK. Current state: {{ $value }}"
+
+      - alert: RedisNodeDown
+        expr: redis_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis node {{ $labels.instance }} is down"
+          description: "Redis node {{ $labels.instance }} has been unreachable for 30 seconds."
+
+      - alert: RedisMemoryCritical
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis memory critical on {{ $labels.instance }}"
+          description: "Memory usage is above 95% on {{ $labels.instance }}. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: RedisReplicationBroken
+        expr: redis_connected_slaves < 1 and redis_cluster_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis master {{ $labels.instance }} has no replicas"
+          description: "Master node {{ $labels.instance }} has lost all its replica connections."
+
+      - alert: RedisClusterSlotsNotOk
+        expr: redis_cluster_slots_ok < 16384
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis cluster has unhealthy slots"
+          description: "Only {{ $value }} of 16384 hash slots are healthy."
+
+  - name: redis-warnings
+    rules:
+      - alert: RedisHighMemory
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high memory on {{ $labels.instance }}"
+          description: "Memory usage is above 80% on {{ $labels.instance }}. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: RedisLowHitRatio
+        expr: |
+          (rate(redis_keyspace_hits_total[5m]) /
+          (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))) * 100 < 50
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis low cache hit ratio on {{ $labels.instance }}"
+          description: "Cache hit ratio is below 50%. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: RedisHighEviction
+        expr: rate(redis_evicted_keys_total[5m]) * 60 > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high eviction rate on {{ $labels.instance }}"
+          description: "Evicting more than 100 keys/min. Current: {{ $value | printf \"%.0f\" }} keys/min"
+
+      - alert: RedisTooManyConnections
+        expr: redis_connected_clients > 200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many Redis connections on {{ $labels.instance }}"
+          description: "Connected clients: {{ $value }}. Possible connection leak."
+
+      - alert: RedisSlowQueries
+        expr: delta(redis_slowlog_length[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis slow queries detected on {{ $labels.instance }}"
+          description: "{{ $value }} slow log entries in the last 5 minutes."
+
+      - alert: RedisHighLatency
+        expr: redis_commands_duration_seconds_total / redis_commands_processed_total > 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high command latency on {{ $labels.instance }}"
+          description: "Average command latency is above 10ms."

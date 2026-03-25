@@ -1,0 +1,9 @@
+{
+  "postgresql": "PostgreSQL",
+  "redis": "Redis Cluster",
+  "kafka": "Kafka",
+  "minio": "MinIO",
+  "keycloak": "Keycloak",
+  "opa": "OPA",
+  "kong": "Kong"
+}

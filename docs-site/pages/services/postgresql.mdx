@@ -1,0 +1,32 @@
+# PostgreSQL
+
+Shared PostgreSQL 16 instance for all application databases.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| Host | `shared-postgres` (internal) / `localhost:5432` (external) |
+| Admin | `postgres` |
+| Version | 16-alpine |
+
+## Per-App Isolation
+
+Each onboarded app gets:
+- Dedicated database: `{app}_{env}_db`
+- Dedicated user: `{app}_{env}_user`
+- Full privileges on own database only
+
+## Backups
+
+- **Schedule:** Daily at 1:00 AM
+- **Retention:** 30 days
+- **Format:** `pg_dump` → gzip
+- **Location:** `/backup/data/postgres/{timestamp}/`
+- Global objects (roles) backed up separately
+
+## Monitoring
+
+- Prometheus metrics via `postgres_exporter`
+- Grafana dashboard at the monitoring portal
+- Alerts for connection count, replication lag, disk usage

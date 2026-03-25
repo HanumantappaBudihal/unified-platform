@@ -1,0 +1,36 @@
+image:
+  repository: idp/platform-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+service:
+  type: ClusterIP
+  port: 3020
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+env:
+  platformDbHost: postgres
+  platformDbPort: "5432"
+  platformDbName: platform_db
+  platformDbUser: platform_user
+  redisHost: redis
+  redisPort: "6379"
+  kafkaBrokers: kafka-0.kafka-headless:9092,kafka-1.kafka-headless:9092,kafka-2.kafka-headless:9092
+  minioEndpoint: minio
+  minioPort: "9000"
+  keycloakUrl: http://keycloak:8080
+  opaUrl: http://opa:8181
+  kongAdminUrl: http://kong:8001
+
+ingress:
+  enabled: false
+  host: api.platform.example.com

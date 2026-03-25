@@ -1,0 +1,57 @@
+# Integration Test Compose - spins up core services for testing
+# Usage: docker compose -f infra/docker-compose.test.yml up -d
+
+services:
+  kafka:
+    extends:
+      file: ../event-streaming-server/docker-compose.yml
+      service: kafka
+
+  schema-registry:
+    extends:
+      file: ../event-streaming-server/docker-compose.yml
+      service: schema-registry
+
+  redis-node-1:
+    extends:
+      file: ../cache-server/docker-compose.yml
+      service: redis-node-1
+
+  redis-node-2:
+    extends:
+      file: ../cache-server/docker-compose.yml
+      service: redis-node-2
+
+  redis-node-3:
+    extends:
+      file: ../cache-server/docker-compose.yml
+      service: redis-node-3
+
+  postgres:
+    extends:
+      file: ../database-server/docker-compose.yml
+      service: postgres
+
+  minio-1:
+    image: quay.io/minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin-secret-key
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  loki:
+    extends:
+      file: ../centralized-logging/docker-compose.yml
+      service: loki
+
+networks:
+  default:
+    name: infra-test-net

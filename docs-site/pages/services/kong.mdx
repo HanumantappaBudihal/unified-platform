@@ -1,0 +1,26 @@
+# Kong API Gateway
+
+Centralized API gateway for all application traffic with rate limiting.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| Proxy | `http://localhost:8000` |
+| Admin API | `http://localhost:8001` |
+| Version | 3.x (dbless) |
+
+## Per-App Routes
+
+Each onboarded app gets:
+- Service: `{app}-{env}` → `http://{app}-{env}:3000`
+- Route: `/api/{env}/{app}/*` (path stripped)
+- Rate limiting: 300/min, 10,000/hr
+
+## Access Pattern
+
+```
+Client → Kong (:8000) → /api/dev/my-app/users → my-app-dev:3000/users
+```
+
+Applications only need to expose ports on the internal Docker network. Kong handles external routing.

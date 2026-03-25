@@ -1,0 +1,7 @@
+node_modules/
+.next/
+portal/.next/
+portal/node_modules/
+*.log
+.env
+.env.local

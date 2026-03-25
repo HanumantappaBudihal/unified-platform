@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kafka
+description: Apache Kafka (KRaft) cluster for the IDP platform
+version: 1.0.0
+appVersion: "3.9.0"
+type: application

@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.next/
+dist/
+build/
+
+# Secrets (never commit)
+secrets/*.env
+secrets/*.key
+secrets/*.pem
+!secrets/.gitignore
+!secrets/README.md
+
+# Environment files with real credentials
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker volumes
+**/data/
+**/postgres-data/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+.claude

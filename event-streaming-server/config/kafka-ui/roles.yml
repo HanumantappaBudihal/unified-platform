@@ -1,0 +1,152 @@
+# ============================================
+# Kafka UI - RBAC Role Definitions
+# ============================================
+# Roles control what users can see and do in the UI.
+# Assign users to roles via environment variables or OAuth2/LDAP groups.
+
+rbac:
+  roles:
+    # Full admin access - manage everything
+    - name: "admin"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "admin"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view", "edit" ]
+        - resource: topic
+          value: ".*"
+          actions: [ "view", "create", "edit", "delete", "messages_read", "messages_produce", "messages_delete" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view", "delete", "reset_offsets" ]
+        - resource: schema
+          value: ".*"
+          actions: [ "view", "create", "delete", "edit", "modify_global_compatibility" ]
+        - resource: connect
+          value: ".*"
+          actions: [ "view", "edit", "create", "restart" ]
+        - resource: ksql
+          actions: [ "execute" ]
+        - resource: acl
+          actions: [ "view", "edit" ]
+
+    # Team lead - manage topics and consumers, no cluster config
+    - name: "editor"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "editor"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view" ]
+        - resource: topic
+          value: ".*"
+          actions: [ "view", "create", "edit", "messages_read", "messages_produce" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view", "reset_offsets" ]
+        - resource: schema
+          value: ".*"
+          actions: [ "view", "create", "edit" ]
+        - resource: connect
+          value: ".*"
+          actions: [ "view", "edit", "create", "restart" ]
+        - resource: acl
+          actions: [ "view" ]
+
+    # Developer - read topics, produce test messages, view schemas
+    - name: "developer"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "developer"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view" ]
+        - resource: topic
+          value: ".*"
+          actions: [ "view", "messages_read", "messages_produce" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view" ]
+        - resource: schema
+          value: ".*"
+          actions: [ "view" ]
+        - resource: connect
+          value: ".*"
+          actions: [ "view" ]
+        - resource: acl
+          actions: [ "view" ]
+
+    # Read-only viewer - dashboards and monitoring only
+    - name: "viewer"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "viewer"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view" ]
+        - resource: topic
+          value: ".*"
+          actions: [ "view", "messages_read" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view" ]
+        - resource: schema
+          value: ".*"
+          actions: [ "view" ]
+        - resource: connect
+          value: ".*"
+          actions: [ "view" ]
+
+    # Scoped team role example - only access own domain topics
+    - name: "team-orders"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "team-orders"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view" ]
+        - resource: topic
+          value: "^orders\\..*"
+          actions: [ "view", "create", "edit", "messages_read", "messages_produce" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view" ]
+        - resource: schema
+          value: "^orders-.*"
+          actions: [ "view", "create", "edit" ]
+
+    - name: "team-inventory"
+      clusters:
+        - kafka-central
+      subjects:
+        - provider: "oauth"
+          type: "role"
+          value: "team-inventory"
+      permissions:
+        - resource: clusterconfig
+          actions: [ "view" ]
+        - resource: topic
+          value: "^inventory\\..*"
+          actions: [ "view", "create", "edit", "messages_read", "messages_produce" ]
+        - resource: consumer
+          value: ".*"
+          actions: [ "view" ]
+        - resource: schema
+          value: "^inventory-.*"
+          actions: [ "view", "create", "edit" ]

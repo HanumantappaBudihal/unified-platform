@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kong
+description: Kong API Gateway for platform routing
+version: 1.0.0
+appVersion: "3.6"
+type: application

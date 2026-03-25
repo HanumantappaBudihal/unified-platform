@@ -1,0 +1,12 @@
+{
+  "name": "@shared/email-utils",
+  "version": "1.0.0",
+  "description": "Shared email utility for sending transactional emails via SMTP",
+  "main": "src/index.js",
+  "dependencies": {
+    "nodemailer": "^6.9.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

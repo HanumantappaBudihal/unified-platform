@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-keycloak-realm
+  labels:
+    app: keycloak
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  infrastructure-realm.json: |
+    {
+      "realm": "infrastructure",
+      "enabled": true,
+      "displayName": "Infrastructure",
+      "sslRequired": "external",
+      "registrationAllowed": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "clients": [
+        {
+          "clientId": "portal-frontend",
+          "name": "Portal Frontend",
+          "enabled": true,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "redirectUris": ["*"],
+          "webOrigins": ["*"],
+          "protocol": "openid-connect",
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          }
+        },
+        {
+          "clientId": "portal-backend",
+          "name": "Portal Backend",
+          "enabled": true,
+          "publicClient": false,
+          "secret": "portal-backend-secret",
+          "standardFlowEnabled": false,
+          "serviceAccountsEnabled": true,
+          "directAccessGrantsEnabled": true,
+          "protocol": "openid-connect"
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "admin",
+            "description": "Administrator"
+          },
+          {
+            "name": "user",
+            "description": "Standard user"
+          }
+        ]
+      }
+    }

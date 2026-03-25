@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  session-service:
+    build:
+      context: ./session-service
+    container_name: mock-session-service
+    environment:
+      - REDIS_NODES=redis-node-1:6371,redis-node-2:6372,redis-node-3:6373
+      - REDIS_USERNAME=session-svc
+      - REDIS_PASSWORD=session-secret
+    networks:
+      - cache-network
+    restart: unless-stopped
+
+  catalog-service:
+    build:
+      context: ./catalog-service
+    container_name: mock-catalog-service
+    environment:
+      - REDIS_NODES=redis-node-1:6371,redis-node-2:6372,redis-node-3:6373
+      - REDIS_USERNAME=catalog-svc
+      - REDIS_PASSWORD=catalog-secret
+    networks:
+      - cache-network
+    restart: unless-stopped
+
+networks:
+  cache-network:
+    external: true

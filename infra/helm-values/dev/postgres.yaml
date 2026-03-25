@@ -1,0 +1,10 @@
+resources:
+  requests: { memory: "256Mi", cpu: "250m" }
+  limits: { memory: "1Gi", cpu: "1" }
+storage:
+  size: 10Gi
+config:
+  maxConnections: 100
+  sharedBuffers: "128MB"
+backup:
+  enabled: false

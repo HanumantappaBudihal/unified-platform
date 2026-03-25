@@ -1,0 +1,35 @@
+image:
+  repository: idp/portal
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+env:
+  platformApiUrl: http://platform-api:3020
+  kafkaPortalUrl: http://kafka-portal:3001
+  redisPortalUrl: http://redis-portal:3002
+  minioPortalUrl: http://minio-portal:3004
+
+sso:
+  enabled: false
+  keycloakIssuer: ""
+  clientId: gateway-portal
+  clientSecret: ""
+  nextauthSecret: ""
+
+ingress:
+  enabled: false
+  host: portal.platform.example.com

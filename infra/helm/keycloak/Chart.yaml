@@ -1,0 +1,6 @@
+apiVersion: v2
+name: keycloak
+description: Keycloak IAM for SSO and application authentication
+version: 1.0.0
+appVersion: "24.0"
+type: application

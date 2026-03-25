@@ -1,0 +1,10 @@
+replicas: 2
+production: true
+resources:
+  requests: { memory: "1Gi", cpu: "1" }
+  limits: { memory: "2Gi", cpu: "2" }
+ingress:
+  enabled: true
+  host: auth.platform.example.com
+tls:
+  enabled: true

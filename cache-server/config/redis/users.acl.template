@@ -1,0 +1,4 @@
+user admin on >${REDIS_ADMIN_PASSWORD} ~* &* +@all
+user session-svc on >${REDIS_SESSION_SVC_PASSWORD} ~sessions:* &sessions:* +@all -@admin -@dangerous
+user catalog-svc on >${REDIS_CATALOG_SVC_PASSWORD} ~catalog:* &catalog:* +@all -@admin -@dangerous
+user default off

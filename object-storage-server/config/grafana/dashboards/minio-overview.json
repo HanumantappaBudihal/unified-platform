@@ -1,0 +1,99 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 80 }, { "color": "red", "value": 95 }] } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "title": "Total Storage Used",
+      "type": "stat",
+      "targets": [{ "expr": "minio_cluster_capacity_usable_total_bytes - minio_cluster_capacity_usable_free_bytes", "legendFormat": "Used" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "title": "Total Storage Available",
+      "type": "stat",
+      "targets": [{ "expr": "minio_cluster_capacity_usable_free_bytes", "legendFormat": "Free" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "title": "Total Objects",
+      "type": "stat",
+      "targets": [{ "expr": "minio_cluster_objects_size_distribution", "legendFormat": "Objects" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "title": "S3 Requests/sec",
+      "type": "stat",
+      "targets": [{ "expr": "sum(rate(minio_s3_requests_total[5m]))", "legendFormat": "req/s" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "title": "S3 Request Rate by API",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum by (api)(rate(minio_s3_requests_total[5m]))", "legendFormat": "{{api}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "title": "Storage Usage Over Time",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "minio_cluster_capacity_usable_total_bytes - minio_cluster_capacity_usable_free_bytes", "legendFormat": "Used" },
+        { "expr": "minio_cluster_capacity_usable_total_bytes", "legendFormat": "Total" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "title": "Request Latency (TTFB p50/p95/p99)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(minio_s3_requests_ttfb_seconds_distribution_bucket[5m]))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, rate(minio_s3_requests_ttfb_seconds_distribution_bucket[5m]))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, rate(minio_s3_requests_ttfb_seconds_distribution_bucket[5m]))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "title": "S3 Errors by API",
+      "type": "timeseries",
+      "targets": [{ "expr": "sum by (api)(rate(minio_s3_requests_errors_total[5m]))", "legendFormat": "{{api}}" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "binBps" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "title": "Network Throughput (Sent/Received)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(minio_s3_traffic_sent_bytes[5m]))", "legendFormat": "Sent" },
+        { "expr": "sum(rate(minio_s3_traffic_received_bytes[5m]))", "legendFormat": "Received" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["minio", "storage"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "MinIO Storage Overview",
+  "uid": "minio-storage-overview"
+}

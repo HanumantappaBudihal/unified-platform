@@ -1,0 +1,18 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'email-mailpit:1025'
+  smtp_from: 'minio-alerts@infrastructure.local'
+  smtp_require_tls: false
+
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: default
+
+receivers:
+  - name: default
+    email_configs:
+      - to: 'ops-team@infrastructure.local'
+        send_resolved: true

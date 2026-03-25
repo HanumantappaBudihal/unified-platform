@@ -1,0 +1,47 @@
+groups:
+  - name: minio-alerts
+    rules:
+      - alert: MinIONodeDown
+        expr: up{job="minio-node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MinIO node {{ $labels.instance }} is down"
+          description: "MinIO node has been unreachable for more than 1 minute."
+
+      - alert: MinIODiskUsageHigh
+        expr: (minio_cluster_capacity_usable_total_bytes - minio_cluster_capacity_usable_free_bytes) / minio_cluster_capacity_usable_total_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MinIO cluster disk usage above 85%"
+          description: "Cluster storage usage is {{ $value | humanizePercentage }}."
+
+      - alert: MinIODiskUsageCritical
+        expr: (minio_cluster_capacity_usable_total_bytes - minio_cluster_capacity_usable_free_bytes) / minio_cluster_capacity_usable_total_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MinIO cluster disk usage above 95%"
+          description: "Cluster storage is nearly full at {{ $value | humanizePercentage }}."
+
+      - alert: MinIOHighErrorRate
+        expr: rate(minio_s3_requests_errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MinIO high S3 error rate"
+          description: "S3 error rate is {{ $value }} errors/sec."
+
+      - alert: MinIOSlowRequests
+        expr: histogram_quantile(0.99, rate(minio_s3_requests_ttfb_seconds_distribution_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MinIO slow request latency (p99 > 5s)"
+          description: "99th percentile TTFB is {{ $value }}s."

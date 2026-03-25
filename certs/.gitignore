@@ -1,0 +1,8 @@
+*.crt
+*.key
+*.pem
+*.p12
+*.jks
+*.csr
+*.srl
+san.cnf

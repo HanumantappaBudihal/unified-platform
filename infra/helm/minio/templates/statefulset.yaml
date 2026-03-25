@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "minio-storage.fullname" . }}
+  labels:
+    {{- include "minio-storage.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "minio-storage.fullname" . }}-headless
+  replicas: {{ .Values.cluster.nodes }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "minio-storage.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "minio-storage.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: minio
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "server"
+            - "--console-address"
+            - ":9001"
+            {{- if .Values.cluster.erasureCoding }}
+            - "http://{{ include "minio-storage.fullname" . }}-{0...{{ sub .Values.cluster.nodes 1 }}}.{{ include "minio-storage.fullname" . }}-headless.{{ .Release.Namespace }}.svc.cluster.local/data"
+            {{- else }}
+            - "/data"
+            {{- end }}
+          ports:
+            - name: api
+              containerPort: 9000
+              protocol: TCP
+            - name: console
+              containerPort: 9001
+              protocol: TCP
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio-storage.fullname" . }}-secret
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio-storage.fullname" . }}-secret
+                  key: rootPassword
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}

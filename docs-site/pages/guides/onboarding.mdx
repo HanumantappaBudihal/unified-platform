@@ -1,0 +1,52 @@
+# Onboarding an App
+
+Register and provision infrastructure for a new application in under 2 minutes.
+
+## Via Portal
+
+1. Open **http://localhost:3006/apps/new**
+2. Enter app name, description, and owner
+3. Select resources (PostgreSQL, Redis, Kafka, MinIO)
+4. Click **Create & Onboard**
+5. Copy connection credentials from the app detail page
+
+## Via CLI
+
+```bash
+# Register + scaffold from template
+platform init my-service --template node-api
+
+# Provision infrastructure
+cd my-service
+platform onboard
+
+# Check status
+platform status
+platform status --credentials
+```
+
+## Via API
+
+```bash
+# Register
+curl -X POST http://localhost:3020/api/v1/apps \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "My Service", "ownerId": "user1"}'
+
+# Provision
+curl -X POST http://localhost:3020/api/v1/apps/my-service/onboard \
+  -H 'Content-Type: application/json' \
+  -d '{"resources": ["postgres", "redis", "kafka", "minio"], "environment": "dev"}'
+```
+
+## What Gets Provisioned
+
+| Service | What's Created | Naming |
+|---------|---------------|--------|
+| PostgreSQL | Database + user | `{app}_{env}_db` / `{app}_{env}_user` |
+| Redis | ACL user with key prefix isolation | `{env}:{app}:*` |
+| Kafka | Topics + DLQs | `{env}.{app}.events`, `{env}.{app}.commands` |
+| MinIO | Bucket with versioning + IAM policy | `{env}-{app}` |
+| Keycloak | OIDC client | `{app}-{env}` |
+| Kong | Service + route with rate limiting | `/api/{env}/{app}/*` |
+| OPA | App role assignment | `{app}-{env}` |

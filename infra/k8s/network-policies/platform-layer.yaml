@@ -1,0 +1,125 @@
+---
+# Platform API: Portal and Kong can access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-api-access
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: portal
+        - podSelector:
+            matchLabels:
+              app: kong
+      ports:
+        - port: 3020
+    # Health checks from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              environment: monitoring
+      ports:
+        - port: 3020
+---
+# Portal: Kong (external traffic) can access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portal-access
+spec:
+  podSelector:
+    matchLabels:
+      app: portal
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: kong
+      ports:
+        - port: 3000
+    # Istio ingress gateway
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              istio: system
+      ports:
+        - port: 3000
+---
+# Kong: accepts external traffic via ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kong-access
+spec:
+  podSelector:
+    matchLabels:
+      app: kong
+  policyTypes:
+    - Ingress
+  ingress:
+    # External proxy traffic
+    - ports:
+        - port: 8000
+        - port: 8443
+    # Admin API only from Platform API
+    - from:
+        - podSelector:
+            matchLabels:
+              app: platform-api
+      ports:
+        - port: 8001
+---
+# Keycloak: all services need auth
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak-access
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 8080
+        - port: 8443
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              istio: system
+      ports:
+        - port: 8080
+---
+# OPA: Platform API and Kong need policy checks
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: opa-access
+spec:
+  podSelector:
+    matchLabels:
+      app: opa
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: platform-api
+        - podSelector:
+            matchLabels:
+              app: kong
+      ports:
+        - port: 8181

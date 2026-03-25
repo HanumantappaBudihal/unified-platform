@@ -1,0 +1,10 @@
+cluster:
+  masters: 3
+  replicas: 3
+resources:
+  requests: { cpu: "500m", memory: "1Gi" }
+  limits: { cpu: "1", memory: "2Gi" }
+persistence:
+  size: 50Gi
+maxmemory: 1gb
+maxmemoryPolicy: allkeys-lru

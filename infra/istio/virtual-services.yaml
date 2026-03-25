@@ -1,0 +1,56 @@
+---
+# Retry policy for Platform API
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: platform-api
+  namespace: idp-prod
+spec:
+  hosts:
+    - platform-api
+  http:
+    - route:
+        - destination:
+            host: platform-api
+            port:
+              number: 3020
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: 5xx,reset,connect-failure
+      timeout: 30s
+---
+# Canary routing for Portal (weight-based)
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: portal
+  namespace: idp-prod
+spec:
+  hosts:
+    - portal
+  http:
+    - route:
+        - destination:
+            host: portal
+            subset: stable
+          weight: 100
+        - destination:
+            host: portal
+            subset: canary
+          weight: 0
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: portal-subsets
+  namespace: idp-prod
+spec:
+  host: portal
+  subsets:
+    - name: stable
+      labels:
+        version: stable
+    - name: canary
+      labels:
+        version: canary

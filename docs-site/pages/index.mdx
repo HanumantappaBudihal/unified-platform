@@ -1,0 +1,59 @@
+# Internal Developer Platform
+
+A complete, self-hosted infrastructure platform for running 20-50+ applications with full self-service, multi-environment support, and enterprise-grade security.
+
+## What's Included
+
+| Layer | Services |
+|-------|----------|
+| **Data** | PostgreSQL, Redis Cluster, Kafka (KRaft), MinIO |
+| **Security** | Keycloak (SSO), OPA (Authorization), Kong (API Gateway), TLS |
+| **Observability** | Prometheus, Grafana, Loki, Alertmanager, Uptime Kuma |
+| **Platform** | Platform API, Unified Portal, CLI, Backup Server |
+
+## Quick Start
+
+```bash
+# 1. Generate secrets
+./scripts/generate-secrets.sh
+
+# 2. Start infrastructure
+cd database-server && docker compose up -d
+cd ../cache-server && docker compose up -d
+cd ../event-streaming-server && docker compose up -d
+cd ../object-storage-server && docker compose up -d
+cd ../auth-server && docker compose up -d
+cd ../authz-server && docker compose up -d
+cd ../api-gateway-server && docker compose up -d
+cd ../platform-api && docker compose up -d
+cd ../unified-gateway-portal && docker compose up -d
+
+# 3. Open the portal
+open http://localhost:3006
+
+# 4. Or use the CLI
+npm i -g @idp/cli
+platform login
+platform init my-app --template node-api
+platform onboard -a my-app
+```
+
+## Architecture
+
+```
+         ┌──────────────────────────┐
+         │   Unified Portal (:3006) │
+         └────────┬─────────────────┘
+                  │
+         ┌────────▼─────────────────┐
+         │   Platform API (:3020)   │
+         └────────┬─────────────────┘
+                  │ orchestrates
+    ┌─────────────┼─────────────────┐
+    ▼             ▼                 ▼
+ Security     Data Layer      Observability
+ Keycloak     PostgreSQL      Loki
+ OPA          Redis Cluster   Prometheus
+ Kong         Kafka (KRaft)   Grafana
+ TLS/Certs    MinIO           Alertmanager
+```

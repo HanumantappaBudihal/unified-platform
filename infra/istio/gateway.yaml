@@ -1,0 +1,86 @@
+---
+# Istio Gateway for external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: idp-gateway
+  namespace: idp-prod
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - portal.platform.example.com
+        - api.platform.example.com
+        - auth.platform.example.com
+        - grafana.platform.example.com
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - portal.platform.example.com
+        - api.platform.example.com
+        - auth.platform.example.com
+        - grafana.platform.example.com
+      tls:
+        mode: SIMPLE
+        credentialName: idp-platform-tls
+---
+# Route external traffic to services
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: idp-portal-external
+  namespace: idp-prod
+spec:
+  hosts:
+    - portal.platform.example.com
+  gateways:
+    - idp-gateway
+  http:
+    - route:
+        - destination:
+            host: portal
+            port:
+              number: 3000
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: idp-api-external
+  namespace: idp-prod
+spec:
+  hosts:
+    - api.platform.example.com
+  gateways:
+    - idp-gateway
+  http:
+    - route:
+        - destination:
+            host: platform-api
+            port:
+              number: 3020
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: idp-auth-external
+  namespace: idp-prod
+spec:
+  hosts:
+    - auth.platform.example.com
+  gateways:
+    - idp-gateway
+  http:
+    - route:
+        - destination:
+            host: keycloak
+            port:
+              number: 8080

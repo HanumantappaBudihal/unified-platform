@@ -1,0 +1,52 @@
+---
+# Circuit breaker + connection pool for data services
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: postgres-circuit-breaker
+  namespace: idp-prod
+spec:
+  host: postgres
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 200
+      http:
+        h2UpgradePolicy: DO_NOT_UPGRADE
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: kafka-circuit-breaker
+  namespace: idp-prod
+spec:
+  host: kafka-headless
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 500
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: platform-api-retry
+  namespace: idp-prod
+spec:
+  host: platform-api
+  trafficPolicy:
+    connectionPool:
+      http:
+        maxRequestsPerConnection: 100
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      interval: 15s
+      baseEjectionTime: 15s

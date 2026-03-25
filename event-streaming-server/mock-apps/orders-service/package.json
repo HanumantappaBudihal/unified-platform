@@ -1,0 +1,13 @@
+{
+  "name": "orders-service",
+  "version": "1.0.0",
+  "description": "Mock Orders Service - produces order events to Kafka Central",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "docker": "docker compose up -d"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  }
+}

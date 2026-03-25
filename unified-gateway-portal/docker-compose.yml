@@ -1,0 +1,46 @@
+services:
+  gateway:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+    container_name: infra-gateway
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+          pids: 100
+        reservations:
+          memory: 128M
+    # pids_limit: 100  # conflicts with deploy.resources.limits
+    ports:
+      - "3006:3000"
+    environment:
+      PLATFORM_API_URL: http://host.docker.internal:3020
+      KAFKA_PORTAL_URL: http://host.docker.internal:3001
+      REDIS_PORTAL_URL: http://host.docker.internal:3002
+      MINIO_PORTAL_URL: http://host.docker.internal:3004
+      KAFKA_UI_URL: http://host.docker.internal:8080
+      REDIS_INSIGHT_URL: http://host.docker.internal:5540
+      MINIO_CONSOLE_URL: http://host.docker.internal:9001
+      KAFKA_GRAFANA_URL: http://host.docker.internal:3000
+      REDIS_GRAFANA_URL: http://host.docker.internal:3003
+      MINIO_GRAFANA_URL: http://host.docker.internal:3005
+      KAFKA_PROMETHEUS_URL: http://host.docker.internal:9090
+      REDIS_PROMETHEUS_URL: http://host.docker.internal:9091
+      MINIO_PROMETHEUS_URL: http://host.docker.internal:9097
+      # SSO (uncomment to enable Keycloak authentication)
+      # NEXTAUTH_URL: http://localhost:3006
+      # NEXTAUTH_SECRET: change-me-to-a-random-secret
+      # KEYCLOAK_ISSUER: http://host.docker.internal:8080/realms/infrastructure
+      # KEYCLOAK_CLIENT_ID: gateway-portal
+      # KEYCLOAK_CLIENT_SECRET:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

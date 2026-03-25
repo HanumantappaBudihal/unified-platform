@@ -1,0 +1,21 @@
+# Persistent data volumes
+data/
+
+# Environment (contains secrets — never commit!)
+.env
+.env.local
+
+# Generated from template (contains secrets)
+config/redis/users.acl
+
+# Node
+node_modules/
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

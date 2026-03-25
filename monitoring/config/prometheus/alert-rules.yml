@@ -1,0 +1,136 @@
+groups:
+  # ─── Kafka Alerts ───
+  - name: kafka
+    rules:
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumergroup_lag_sum > 10000
+        for: 5m
+        labels:
+          severity: warning
+          service: kafka
+        annotations:
+          summary: "Consumer group lag is high"
+          description: "Consumer group {{ $labels.consumergroup }} lag is {{ $value }}"
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: kafka
+        annotations:
+          summary: "Under-replicated partitions detected"
+
+      - alert: KafkaBrokerDown
+        expr: count(up{job="kafka-jmx"} == 1) < 3
+        for: 1m
+        labels:
+          severity: critical
+          service: kafka
+        annotations:
+          summary: "Kafka broker(s) down"
+
+  # ─── Redis Alerts ───
+  - name: redis
+    rules:
+      - alert: RedisNodeDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis node is down"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis memory usage > 85%"
+
+      - alert: RedisHighLatency
+        expr: redis_commands_duration_seconds_total / redis_commands_processed_total > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis command latency is high"
+
+  # ─── MinIO Alerts ───
+  - name: minio
+    rules:
+      - alert: MinIONodeDown
+        expr: count(up{job="minio-cluster"} == 1) < 4
+        for: 2m
+        labels:
+          severity: critical
+          service: minio
+        annotations:
+          summary: "MinIO node(s) down"
+
+      - alert: MinIODiskUsageHigh
+        expr: minio_cluster_disk_free_bytes / minio_cluster_disk_total_bytes < 0.15
+        for: 10m
+        labels:
+          severity: warning
+          service: minio
+        annotations:
+          summary: "MinIO disk usage > 85%"
+
+  # ─── Kong Alerts ───
+  - name: kong
+    rules:
+      - alert: KongHighErrorRate
+        expr: sum(rate(kong_http_requests_total{code=~"5.."}[5m])) / sum(rate(kong_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: kong
+        annotations:
+          summary: "Kong 5xx error rate > 5%"
+
+      - alert: KongHighLatency
+        expr: histogram_quantile(0.95, sum(rate(kong_request_latency_ms_bucket[5m])) by (le)) > 2000
+        for: 5m
+        labels:
+          severity: warning
+          service: kong
+        annotations:
+          summary: "Kong p95 latency > 2s"
+
+  # ─── PostgreSQL Alerts ───
+  - name: postgres
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: "PostgreSQL is down"
+
+      - alert: PostgresHighConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: "PostgreSQL connection usage > 80%"
+
+  # ─── General ───
+  - name: general
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is down"
+          description: "Target {{ $labels.instance }} has been down for > 2 minutes"

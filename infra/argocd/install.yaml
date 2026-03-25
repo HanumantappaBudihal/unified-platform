@@ -1,0 +1,48 @@
+---
+# ArgoCD Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+# Note: Install ArgoCD using official manifests first:
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#
+# Then apply this file for the IDP platform configuration:
+#   kubectl apply -f infra/argocd/install.yaml
+
+---
+# ArgoCD Project for the IDP Platform
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idp-platform
+  namespace: argocd
+spec:
+  description: Internal Developer Platform infrastructure
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: idp-dev
+      server: https://kubernetes.default.svc
+    - namespace: idp-staging
+      server: https://kubernetes.default.svc
+    - namespace: idp-prod
+      server: https://kubernetes.default.svc
+    - namespace: idp-monitoring
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  roles:
+    - name: platform-admin
+      description: Full access to all platform applications
+      policies:
+        - p, proj:idp-platform:platform-admin, applications, *, idp-platform/*, allow
+      groups:
+        - platform-admins

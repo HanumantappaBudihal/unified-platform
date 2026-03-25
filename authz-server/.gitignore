@@ -1,0 +1,4 @@
+.env
+node_modules/
+portal/.next/
+portal/node_modules/

@@ -1,0 +1,41 @@
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "24.0"
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+admin:
+  user: admin
+  password: admin
+
+database:
+  vendor: postgres
+  host: postgres
+  port: 5432
+  name: keycloak
+  user: keycloak
+  password: keycloak-db-secret
+
+production: false
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "2"
+
+service:
+  type: ClusterIP
+  httpPort: 8080
+  httpsPort: 8443
+
+ingress:
+  enabled: false
+  host: auth.example.com
+
+tls:
+  enabled: false
+  secretName: keycloak-tls

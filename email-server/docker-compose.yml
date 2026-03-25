@@ -1,0 +1,45 @@
+services:
+  # ─── Mailpit (Local SMTP + Web UI) ───
+  email-mailpit:
+    image: axllent/mailpit:latest
+    container_name: email-mailpit
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+          pids: 50
+        reservations:
+          memory: 64M
+    environment:
+      # SMTP settings
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      # Web UI settings
+      MP_UI_AUTH: "${MAILPIT_UI_USER:-admin}:${MAILPIT_UI_PASSWORD:-admin}"
+      MP_MAX_MESSAGES: ${MAILPIT_MAX_MESSAGES:-1000}
+      # Storage
+      MP_DATABASE: /data/mailpit.db
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"    # SMTP
+      - "${MAILPIT_UI_PORT:-8025}:8025"       # Web UI
+    volumes:
+      - email-mailpit-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025/livez"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - email-network
+
+volumes:
+  email-mailpit-data:
+    driver: local
+
+networks:
+  email-network:
+    driver: bridge
+    name: email-network

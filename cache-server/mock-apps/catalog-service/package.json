@@ -1,0 +1,9 @@
+{
+  "name": "mock-catalog-service",
+  "version": "1.0.0",
+  "description": "Mock catalog service demonstrating cache-aside pattern with pub/sub invalidation",
+  "main": "index.js",
+  "dependencies": {
+    "ioredis": "^5.4.1"
+  }
+}

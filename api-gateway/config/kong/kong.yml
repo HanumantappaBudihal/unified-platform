@@ -1,0 +1,186 @@
+_format_version: "3.0"
+_transform: true
+
+# ─────────────────────────────────────────────
+# Services — upstream backends
+# ─────────────────────────────────────────────
+
+services:
+  # ── Infrastructure Portals ──
+  - name: gateway-portal
+    url: http://host.docker.internal:3006
+    tags: [portal, infra]
+    routes:
+      - name: gateway-portal-route
+        paths: [/portal/gateway]
+        strip_path: true
+
+  - name: kafka-portal
+    url: http://host.docker.internal:3001
+    tags: [portal, infra]
+    routes:
+      - name: kafka-portal-route
+        paths: [/portal/kafka]
+        strip_path: true
+
+  - name: cache-portal
+    url: http://host.docker.internal:3002
+    tags: [portal, infra]
+    routes:
+      - name: cache-portal-route
+        paths: [/portal/cache]
+        strip_path: true
+
+  - name: storage-portal
+    url: http://host.docker.internal:3004
+    tags: [portal, infra]
+    routes:
+      - name: storage-portal-route
+        paths: [/portal/storage]
+        strip_path: true
+
+  - name: authz-portal
+    url: http://host.docker.internal:3008
+    tags: [portal, infra]
+    routes:
+      - name: authz-portal-route
+        paths: [/portal/authz]
+        strip_path: true
+
+  # ── Grafana Dashboards ──
+  - name: grafana-kafka
+    url: http://host.docker.internal:3000
+    tags: [grafana, monitoring]
+    routes:
+      - name: grafana-kafka-route
+        paths: [/grafana/kafka]
+        strip_path: true
+
+  - name: grafana-cache
+    url: http://host.docker.internal:3003
+    tags: [grafana, monitoring]
+    routes:
+      - name: grafana-cache-route
+        paths: [/grafana/cache]
+        strip_path: true
+
+  - name: grafana-storage
+    url: http://host.docker.internal:3005
+    tags: [grafana, monitoring]
+    routes:
+      - name: grafana-storage-route
+        paths: [/grafana/storage]
+        strip_path: true
+
+  # ── Core Infrastructure APIs ──
+  - name: keycloak
+    url: http://host.docker.internal:8080
+    tags: [auth, core]
+    routes:
+      - name: keycloak-route
+        paths: [/auth]
+        strip_path: true
+
+  - name: opa
+    url: http://host.docker.internal:8181
+    tags: [authz, core]
+    routes:
+      - name: opa-route
+        paths: [/authz]
+        strip_path: true
+
+  - name: minio-s3
+    url: http://host.docker.internal:9000
+    tags: [storage, core]
+    routes:
+      - name: minio-s3-route
+        paths: [/s3]
+        strip_path: true
+
+  - name: schema-registry
+    url: http://host.docker.internal:8081
+    tags: [kafka, core]
+    routes:
+      - name: schema-registry-route
+        paths: [/schema-registry]
+        strip_path: true
+
+  - name: kafka-rest
+    url: http://host.docker.internal:8082
+    tags: [kafka, core]
+    routes:
+      - name: kafka-rest-route
+        paths: [/kafka]
+        strip_path: true
+
+# ─────────────────────────────────────────────
+# Global Plugins
+# ─────────────────────────────────────────────
+
+plugins:
+  # ── Prometheus Metrics ──
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  # ── Correlation ID (request tracing) ──
+  - name: correlation-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid#counter
+      echo_downstream: true
+
+  # ── Global Rate Limiting ──
+  - name: rate-limiting
+    config:
+      minute: 300
+      hour: 10000
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+      error_code: 429
+      error_message: "Rate limit exceeded. Please slow down."
+
+  # ── Request Size Limiting ──
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 10
+      size_unit: megabytes
+      require_content_length: false
+
+  # ── Bot Detection ──
+  - name: bot-detection
+    config:
+      deny: []
+      allow: []
+
+  # ── IP Restriction (allow all by default, customize per route) ──
+  # Uncomment to restrict Admin API access:
+  # - name: ip-restriction
+  #   service: keycloak
+  #   config:
+  #     allow: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]
+
+# ─────────────────────────────────────────────
+# Consumers (API clients)
+# ─────────────────────────────────────────────
+
+consumers:
+  - username: infra-admin
+    tags: [admin]
+    keyauth_credentials:
+      - key: infra-admin-api-key-change-me
+
+  - username: app-service
+    tags: [service]
+    keyauth_credentials:
+      - key: app-service-api-key-change-me
+
+  - username: monitoring
+    tags: [monitoring]
+    keyauth_credentials:
+      - key: monitoring-api-key-change-me

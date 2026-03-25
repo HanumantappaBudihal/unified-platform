@@ -1,0 +1,37 @@
+services:
+  tls-proxy:
+    image: nginx:1.27-alpine
+    container_name: tls-proxy
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+          pids: 50
+    ports:
+      - "3500:3500"   # Grafana Kafka
+      - "3501:3501"   # Kafka Portal
+      - "3502:3502"   # Cache Portal
+      - "3503:3503"   # Grafana Cache
+      - "3504:3504"   # Storage Portal
+      - "3505:3505"   # Grafana Storage
+      - "3506:3506"   # Gateway Portal
+      - "3508:3508"   # AuthZ Portal
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/server.crt:/etc/nginx/certs/server.crt:ro
+      - ../nginx/server.key:/etc/nginx/certs/server.key:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

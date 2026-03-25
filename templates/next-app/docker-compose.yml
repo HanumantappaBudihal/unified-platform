@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    container_name: {{APP_NAME}}
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - auth-network
+      - storage-net
+
+networks:
+  auth-network:
+    external: true
+    name: auth-network
+  storage-net:
+    external: true
+    name: storage-net

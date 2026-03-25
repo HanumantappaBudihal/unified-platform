@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opa-data
+  labels:
+    app: opa
+    release: {{ .Release.Name }}
+data:
+  roles.json: |
+    {
+      "roles": {
+        "admin": {
+          "permissions": [
+            { "resource": "*", "actions": ["read", "write", "delete", "admin"] }
+          ]
+        },
+        "editor": {
+          "permissions": [
+            { "resource": "apps", "actions": ["read", "write"] },
+            { "resource": "configs", "actions": ["read", "write"] },
+            { "resource": "deployments", "actions": ["read"] }
+          ]
+        },
+        "viewer": {
+          "permissions": [
+            { "resource": "apps", "actions": ["read"] },
+            { "resource": "configs", "actions": ["read"] },
+            { "resource": "deployments", "actions": ["read"] }
+          ]
+        }
+      }
+    }

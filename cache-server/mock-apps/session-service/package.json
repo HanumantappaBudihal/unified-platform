@@ -1,0 +1,9 @@
+{
+  "name": "mock-session-service",
+  "version": "1.0.0",
+  "description": "Mock session service demonstrating Redis session store and rate limiting",
+  "main": "index.js",
+  "dependencies": {
+    "ioredis": "^5.4.1"
+  }
+}

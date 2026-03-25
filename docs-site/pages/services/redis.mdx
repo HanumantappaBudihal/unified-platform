@@ -1,0 +1,41 @@
+# Redis Cluster
+
+6-node Redis cluster (3 masters + 3 replicas) with ACL-based multi-tenancy.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| Nodes | `redis-node-1:6371` through `redis-node-6:6376` |
+| Version | 7.4-alpine |
+| Mode | Cluster with automatic failover |
+
+## Per-App Isolation
+
+Each onboarded app gets:
+- ACL user: `{app}-{env}-svc`
+- Key prefix restriction: `~{env}:{app}:*`
+- Channel prefix restriction: `&{env}:{app}:*`
+- All commands except `@admin` and `@dangerous`
+
+## Usage
+
+```javascript
+import Redis from 'ioredis';
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  username: process.env.REDIS_USER,
+  password: process.env.REDIS_PASSWORD,
+});
+
+const PREFIX = process.env.REDIS_KEY_PREFIX; // e.g., "dev:my-app:"
+await redis.set(`${PREFIX}session:123`, JSON.stringify(data), 'EX', 3600);
+```
+
+## Backups
+
+- **Schedule:** Every 6 hours
+- **Retention:** 7 days
+- **Format:** RDB snapshot

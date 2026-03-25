@@ -1,0 +1,29 @@
+# Keycloak
+
+Identity and access management for SSO across all platform portals and applications.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| Admin Console | `http://localhost:8080` |
+| HTTPS | `https://localhost:8443` |
+| Version | 24.0 |
+
+## Realms
+
+| Realm | Purpose |
+|-------|---------|
+| `infrastructure` | Platform portal SSO, admin users |
+| `applications` | App-level OIDC clients (auto-created during onboarding) |
+
+## Default Clients
+
+Infrastructure realm clients: `gateway-portal`, `kafka-portal`, `redis-portal`, `minio-portal`, `authz-portal`, `logging-portal`, `health-portal`
+
+## Per-App Clients
+
+When an app is onboarded, a client is created: `{app}-{env}`
+- Standard flow (browser SSO)
+- Direct access grants (username/password)
+- Service accounts (backend-to-backend)

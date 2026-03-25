@@ -1,0 +1,87 @@
+##############################################################
+# Backup & Disaster Recovery Server - Docker Compose
+#
+# Provides scheduled and on-demand backups for:
+#   - Redis cluster (cache-server)
+#   - MinIO object storage (object-storage-server)
+#   - Kafka topic metadata (event-streaming-server)
+#
+# Usage:
+#   docker compose up -d
+##############################################################
+
+services:
+
+  # ============================================================
+  # Backup Runner — Cron-based backup container
+  # ============================================================
+  backup-runner:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM ubuntu:24.04
+        ENV DEBIAN_FRONTEND=noninteractive
+        RUN apt-get update && apt-get install -y \
+            cron \
+            curl \
+            wget \
+            redis-tools \
+            jq \
+            ca-certificates \
+            && rm -rf /var/lib/apt/lists/*
+
+        # Install MinIO Client (mc)
+        RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
+            -o /usr/local/bin/mc && chmod +x /usr/local/bin/mc
+
+        # Install Kafka CLI tools
+        RUN wget -qO- https://downloads.apache.org/kafka/3.9.0/kafka_2.13-3.9.0.tgz \
+            | tar xz -C /opt && ln -s /opt/kafka_2.13-3.9.0 /opt/kafka
+
+        # Install OpenJDK (required for Kafka CLI)
+        RUN apt-get update && apt-get install -y openjdk-17-jre-headless \
+            && rm -rf /var/lib/apt/lists/*
+
+        ENV PATH="/opt/kafka/bin:${PATH}"
+
+        WORKDIR /backup
+    container_name: backup-runner
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+          pids: 100
+        reservations:
+          memory: 256M
+    env_file:
+      - .env
+    volumes:
+      - ./backups:/backup/data
+      - ./scripts:/backup/scripts:ro
+      - ./config/cron/backup-schedule:/etc/cron.d/backup-schedule:ro
+    networks:
+      - cache-network
+      - storage-net
+      - kafka-network
+    entrypoint: >
+      bash -c "
+        chmod 0644 /etc/cron.d/backup-schedule &&
+        crontab /etc/cron.d/backup-schedule &&
+        echo 'Backup runner started — cron is active.' &&
+        cron -f
+      "
+    restart: unless-stopped
+
+networks:
+  cache-network:
+    external: true
+    name: cache-network
+  storage-net:
+    external: true
+    name: storage-net
+  kafka-network:
+    external: true
+    name: kafka-network

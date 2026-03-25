@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opa-policies
+  labels:
+    app: opa
+    release: {{ .Release.Name }}
+data:
+  platform.rego: |
+    package platform.authz
+
+    import rego.v1
+
+    default allow := false
+
+    # Allow if user has the required role for the requested resource
+    allow if {
+      some role in data.roles[input.user.role].permissions
+      role.resource == input.resource
+      input.action in role.actions
+    }
+
+    # Allow admin users full access
+    allow if {
+      input.user.role == "admin"
+    }
+
+    # Deny access and provide reason
+    reason contains msg if {
+      not allow
+      msg := sprintf("User '%s' with role '%s' is not authorized for %s on %s", [
+        input.user.sub,
+        input.user.role,
+        input.action,
+        input.resource,
+      ])
+    }

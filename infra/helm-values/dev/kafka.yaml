@@ -1,0 +1,9 @@
+replicaCount: 1
+resources:
+  requests: { memory: "512Mi", cpu: "250m" }
+  limits: { memory: "1Gi", cpu: "1" }
+storage:
+  size: 10Gi
+config:
+  defaultReplicationFactor: 1
+  minInsyncReplicas: 1

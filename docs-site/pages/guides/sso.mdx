@@ -1,0 +1,40 @@
+# SSO Setup
+
+All platform portals support optional SSO via Keycloak OIDC.
+
+## Enabling SSO
+
+SSO is opt-in. Set these environment variables on any portal's `docker-compose.yml`:
+
+```yaml
+environment:
+  NEXTAUTH_URL: http://localhost:3006
+  NEXTAUTH_SECRET: your-random-secret
+  KEYCLOAK_ISSUER: http://host.docker.internal:8080/realms/infrastructure
+  KEYCLOAK_CLIENT_ID: gateway-portal
+  KEYCLOAK_CLIENT_SECRET: your-client-secret
+```
+
+## Default Users
+
+| User | Password | Roles |
+|------|----------|-------|
+| admin | admin | platform-admin, all portals |
+| viewer | viewer | read-only |
+
+## Adding Portal Clients
+
+New portal clients are registered in the Keycloak `infrastructure` realm. To add one:
+
+1. Login to Keycloak Admin at `http://localhost:8080`
+2. Select the `infrastructure` realm
+3. Go to Clients → Create
+4. Set Client ID, enable Standard Flow and Service Accounts
+5. Add the portal's URL to Valid Redirect URIs
+
+## App-Level SSO
+
+When an app is onboarded, a Keycloak client is automatically created in the `applications` realm:
+- Client ID: `{app}-{env}`
+- Protocol: OpenID Connect
+- Service accounts enabled for backend-to-backend auth

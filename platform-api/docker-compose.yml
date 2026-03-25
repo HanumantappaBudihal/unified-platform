@@ -1,0 +1,51 @@
+services:
+  platform-api:
+    build: .
+    container_name: platform-api
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    env_file:
+      - .env
+    ports:
+      - "${PLATFORM_API_PORT:-3020}:3020"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3020/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - platform-network
+      - db-network
+      - cache-network
+      - kafka-network
+      - storage-net
+      - auth-network
+      - authz-network
+      - kong-internal
+    restart: unless-stopped
+
+networks:
+  platform-network:
+    driver: bridge
+    name: platform-network
+  db-network:
+    external: true
+  cache-network:
+    external: true
+  kafka-network:
+    external: true
+  storage-net:
+    external: true
+  auth-network:
+    external: true
+  authz-network:
+    external: true
+  kong-internal:
+    external: true

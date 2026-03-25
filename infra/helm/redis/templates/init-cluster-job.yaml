@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-redis-cluster-init
+  labels:
+    app: redis
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        app: redis-cluster-init
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: cluster-init
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              HEADLESS="{{ .Release.Name }}-redis-headless.{{ .Release.Namespace }}.svc.cluster.local"
+              REPLICAS={{ add .Values.cluster.masters .Values.cluster.replicas }}
+
+              echo "Waiting for all Redis nodes to be ready..."
+              for i in $(seq 0 $((REPLICAS - 1))); do
+                HOST="{{ .Release.Name }}-redis-${i}.${HEADLESS}"
+                until redis-cli -h "$HOST" -p 6379 -a "{{ .Values.auth.adminPassword }}" ping | grep -q PONG; do
+                  echo "Waiting for ${HOST}..."
+                  sleep 2
+                done
+                echo "${HOST} is ready"
+              done
+
+              NODES=""
+              for i in $(seq 0 $((REPLICAS - 1))); do
+                NODES="${NODES} {{ .Release.Name }}-redis-${i}.${HEADLESS}:6379"
+              done
+
+              echo "Creating Redis cluster with: ${NODES}"
+              redis-cli --cluster create ${NODES} \
+                --cluster-replicas {{ div .Values.cluster.replicas .Values.cluster.masters }} \
+                --cluster-yes \
+                -a "{{ .Values.auth.adminPassword }}"
+
+              echo "Redis cluster created successfully"

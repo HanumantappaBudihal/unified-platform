@@ -1,0 +1,31 @@
+# OPA (Open Policy Agent)
+
+Fine-grained authorization using Rego policies.
+
+## Connection Info
+
+| Property | Value |
+|----------|-------|
+| API | `http://localhost:8181` |
+| Version | 0.70.0 |
+
+## Platform Roles
+
+| Role | Permissions |
+|------|------------|
+| `platform-admin` | Full access to all apps, teams, audit |
+| `team-admin` | Manage apps within team |
+| `app-owner` | Manage resources for owned apps |
+| `app-developer` | Read/write access to app resources |
+| `app-viewer` | Read-only access |
+
+## Authorization Check
+
+```bash
+curl -X POST http://localhost:8181/v1/data/authz/allow \
+  -d '{"input": {"user": "admin", "action": "create", "resource": "app"}}'
+```
+
+## Policies
+
+Policies are in `authz-server/config/opa/policies/`. Role data is in `authz-server/config/opa/data/roles.json` and updated dynamically via OPA Data API during onboarding.

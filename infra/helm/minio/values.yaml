@@ -1,0 +1,42 @@
+image:
+  repository: quay.io/minio/minio
+  tag: latest
+  pullPolicy: IfNotPresent
+
+cluster:
+  nodes: 4
+  erasureCoding: true
+
+auth:
+  rootUser: admin
+  rootPassword: admin-secret-key
+
+buckets:
+  - name: document-svc
+    quota: 10GB
+    versioning: true
+  - name: media-svc
+    quota: 50GB
+    versioning: true
+  - name: hr-portal
+    quota: 5GB
+    versioning: true
+  - name: analytics-svc
+    quota: 20GB
+  - name: shared
+    quota: 10GB
+
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: ""
+
+resources:
+  requests: { cpu: "250m", memory: "512Mi" }
+  limits: { cpu: "1", memory: "2Gi" }
+
+nginx:
+  enabled: true
+
+monitoring:
+  enabled: false

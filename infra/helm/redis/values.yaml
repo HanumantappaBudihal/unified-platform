@@ -1,0 +1,30 @@
+image:
+  repository: redis
+  tag: "7.4-alpine"
+  pullPolicy: IfNotPresent
+
+cluster:
+  masters: 3
+  replicas: 3
+  nodeTimeout: 5000
+
+auth:
+  adminUser: admin
+  adminPassword: admin-secret
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  requests: { cpu: "100m", memory: "256Mi" }
+  limits: { cpu: "500m", memory: "512Mi" }
+
+maxmemory: 256mb
+maxmemoryPolicy: allkeys-lru
+
+redisInsight:
+  enabled: true
+
+monitoring:
+  enabled: false

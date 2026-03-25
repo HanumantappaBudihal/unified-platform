@@ -1,0 +1,13 @@
+{
+  "name": "@shared/portal-auth",
+  "version": "1.0.0",
+  "description": "Shared NextAuth.js + Keycloak OIDC authentication for all portals",
+  "main": "src/index.js",
+  "dependencies": {
+    "next-auth": "^4.24.11"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18"
+  }
+}

@@ -1,0 +1,18 @@
+image:
+  repository: openpolicyagent/opa
+  tag: "0.70.0-static"
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+service:
+  type: ClusterIP
+  port: 8181

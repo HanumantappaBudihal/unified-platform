@@ -1,0 +1,149 @@
+# ============================================
+# Prometheus Alert Rules for Kafka Central
+# ============================================
+
+groups:
+
+  # ---- Broker Health Alerts ----
+  - name: kafka-broker-health
+    rules:
+      - alert: KafkaBrokerDown
+        expr: up{job="kafka-jmx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka broker is down"
+          description: "Kafka broker JMX exporter has been unreachable for more than 1 minute."
+
+      - alert: KafkaActiveControllerMissing
+        expr: kafka_controller_active_controller_count == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No active Kafka controller"
+          description: "There is no active controller in the Kafka cluster. The cluster cannot process metadata requests."
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_underreplicated_partitions > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Under-replicated partitions detected"
+          description: "{{ $value }} partitions are under-replicated. Data durability may be at risk."
+
+      - alert: KafkaRequestHandlerSaturated
+        expr: kafka_server_requesthandlerpool_avg_idle_percent < 0.25
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka request handler pool is saturated"
+          description: "Request handler idle percentage is {{ $value | humanizePercentage }}. Broker may be overloaded."
+
+  # ---- Consumer Lag Alerts ----
+  - name: kafka-consumer-lag
+    rules:
+      - alert: KafkaConsumerGroupLagHigh
+        expr: sum by (consumergroup, topic) (kafka_consumergroup_lag) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High consumer lag detected"
+          description: "Consumer group {{ $labels.consumergroup }} on topic {{ $labels.topic }} has lag of {{ $value }} messages for more than 5 minutes."
+
+      - alert: KafkaConsumerGroupLagCritical
+        expr: sum by (consumergroup, topic) (kafka_consumergroup_lag) > 10000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical consumer lag"
+          description: "Consumer group {{ $labels.consumergroup }} on topic {{ $labels.topic }} has lag of {{ $value }} messages. Consumers may be down or unable to keep up."
+
+      - alert: KafkaConsumerGroupInactive
+        expr: kafka_consumergroup_members == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consumer group has no active members"
+          description: "Consumer group {{ $labels.consumergroup }} has had 0 active members for more than 10 minutes."
+
+  # ---- Throughput Alerts ----
+  - name: kafka-throughput
+    rules:
+      - alert: KafkaNoMessagesIn
+        expr: sum(kafka_server_brokertopicmetrics_messagesinpersec_rate) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No messages being produced"
+          description: "No messages have been produced to the Kafka cluster for 15 minutes. Check if producers are healthy."
+
+      - alert: KafkaHighThroughput
+        expr: sum(kafka_server_brokertopicmetrics_bytesinpersec_rate) > 50000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka throughput exceeds 50 MB/s"
+          description: "Broker is receiving {{ $value | humanize }}B/s. Consider scaling the cluster."
+
+  # ---- JVM / Resource Alerts ----
+  - name: kafka-resources
+    rules:
+      - alert: KafkaHighHeapUsage
+        expr: (jvm_heap_memory_used_bytes / jvm_heap_memory_max_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka broker heap usage above 90%"
+          description: "JVM heap usage is at {{ $value | humanize }}%. Risk of OutOfMemory errors."
+
+      - alert: KafkaHighGCTime
+        expr: rate(jvm_gc_collection_time_ms_total[5m]) > 500
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC overhead on Kafka broker"
+          description: "Garbage collection is consuming {{ $value | humanize }}ms/s. Broker performance may be degraded."
+
+  # ---- Dead Letter Queue Alerts ----
+  - name: kafka-dlq
+    rules:
+      - alert: KafkaDLQMessagesDetected
+        expr: sum by (topic) (kafka_consumergroup_current_offset{topic=~".*\\.dlq|.*-dlq|_connect-dlq"}) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Messages detected in Dead Letter Queue"
+          description: "DLQ topic {{ $labels.topic }} has messages. Failed events need investigation."
+
+      - alert: KafkaDLQGrowing
+        expr: rate(kafka_consumergroup_current_offset{topic=~".*\\.dlq|.*-dlq|_connect-dlq"}[10m]) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dead Letter Queue is actively growing"
+          description: "DLQ topic {{ $labels.topic }} is receiving new messages continuously. Upstream processing failures may be escalating."
+
+  # ---- Kafka Exporter Health ----
+  - name: kafka-exporter-health
+    rules:
+      - alert: KafkaExporterDown
+        expr: up{job="kafka-exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka Exporter is down"
+          description: "Kafka Exporter is unreachable. Consumer lag metrics are unavailable."

@@ -1,0 +1,8 @@
+prometheus:
+  retention: 90d
+  storage:
+    size: 200Gi
+grafana:
+  ingress:
+    enabled: true
+    host: grafana.platform.example.com

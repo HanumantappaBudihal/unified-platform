@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  orders-service:
+    build: ./orders-service
+    container_name: mock-orders-service
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka-network
+    restart: unless-stopped
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: mock-inventory-service
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka-network
+    restart: unless-stopped
+
+networks:
+  kafka-network:
+    external: true
+    name: kafka-network

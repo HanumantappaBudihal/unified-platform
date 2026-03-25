@@ -1,0 +1,408 @@
+version: '3.8'
+
+networks:
+  cache-network:
+    name: cache-network
+    driver: bridge
+  email-network:
+    external: true
+    name: email-network
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:
+  redis-node-4-data:
+  redis-node-5-data:
+  redis-node-6-data:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # ============================================================
+  # Redis Cluster — 3 Masters + 3 Replicas
+  # ============================================================
+  redis-node-1:
+    image: redis:7.4-alpine
+    container_name: redis-node-1
+    command: redis-server /etc/redis/redis-node-1.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6371:6371"
+    volumes:
+      - redis-node-1-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-1.conf:/etc/redis/redis-node-1.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6371", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-node-2:
+    image: redis:7.4-alpine
+    container_name: redis-node-2
+    command: redis-server /etc/redis/redis-node-2.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6372:6372"
+    volumes:
+      - redis-node-2-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-2.conf:/etc/redis/redis-node-2.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6372", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-node-3:
+    image: redis:7.4-alpine
+    container_name: redis-node-3
+    command: redis-server /etc/redis/redis-node-3.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6373:6373"
+    volumes:
+      - redis-node-3-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-3.conf:/etc/redis/redis-node-3.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6373", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-node-4:
+    image: redis:7.4-alpine
+    container_name: redis-node-4
+    command: redis-server /etc/redis/redis-node-4.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6374:6374"
+    volumes:
+      - redis-node-4-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-4.conf:/etc/redis/redis-node-4.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6374", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-node-5:
+    image: redis:7.4-alpine
+    container_name: redis-node-5
+    command: redis-server /etc/redis/redis-node-5.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6375:6375"
+    volumes:
+      - redis-node-5-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-5.conf:/etc/redis/redis-node-5.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6375", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-node-6:
+    image: redis:7.4-alpine
+    container_name: redis-node-6
+    command: redis-server /etc/redis/redis-node-6.conf
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "6376:6376"
+    volumes:
+      - redis-node-6-data:/data
+      - ./config/redis/redis-common.conf:/etc/redis/redis-common.conf:ro
+      - ./config/redis/redis-node-6.conf:/etc/redis/redis-node-6.conf:ro
+      - ./config/redis/users.acl:/etc/redis/users.acl:ro
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6376", "--user", "admin", "-a", "${REDIS_ADMIN_PASSWORD:-admin-secret}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================================
+  # Redis Insight — Official Redis GUI
+  # ============================================================
+  redis-insight:
+    image: redis/redisinsight:2.64.0
+    container_name: redis-insight
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    ports:
+      - "5540:5540"
+    networks:
+      - cache-network
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================================
+  # Redis Exporter — Prometheus Metrics
+  # ============================================================
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.67.0
+    container_name: redis-exporter
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    environment:
+      - REDIS_ADDR=rediss://redis-node-1:6371,rediss://redis-node-2:6372,rediss://redis-node-3:6373,rediss://redis-node-4:6374,rediss://redis-node-5:6375,rediss://redis-node-6:6376
+      - REDIS_PASSWORD=${REDIS_ADMIN_PASSWORD:-admin-secret}
+      - REDIS_USER=${REDIS_ADMIN_USER:-admin}
+      - REDIS_EXPORTER_TLS_CA_CERT_FILE=/tls/ca.crt
+      - REDIS_EXPORTER_SKIP_TLS_VERIFICATION=true
+    ports:
+      - "9121:9121"
+    volumes:
+      - ../certs/redis:/tls:ro
+    networks:
+      - cache-network
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+    profiles:
+      - monitoring
+      - full
+    restart: unless-stopped
+
+  # ============================================================
+  # Prometheus — Metrics Collection
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: cache-prometheus
+    user: "nobody"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - cache-network
+    depends_on:
+      - redis-exporter
+    profiles:
+      - monitoring
+      - full
+    restart: unless-stopped
+
+  # ============================================================
+  # Grafana — Dashboards
+  # ============================================================
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: cache-grafana
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - cache-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+      - full
+    restart: unless-stopped
+
+  # ============================================================
+  # Alertmanager — Alert Routing
+  # ============================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: cache-alertmanager
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    ports:
+      - "9095:9093"
+    volumes:
+      - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    networks:
+      - cache-network
+      - email-network
+    profiles:
+      - monitoring
+      - full
+    restart: unless-stopped
+
+  # ============================================================
+  # Cache Portal — Next.js Management Dashboard
+  # ============================================================
+  cache-portal:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+    container_name: cache-portal
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+    ports:
+      - "${PORTAL_PORT:-3002}:3000"
+    environment:
+      - REDIS_NODES=redis-node-1:6371,redis-node-2:6372,redis-node-3:6373
+      - REDIS_PASSWORD=${REDIS_ADMIN_PASSWORD:-admin-secret}
+      - REDIS_USERNAME=${REDIS_ADMIN_USER:-admin}
+      - REDIS_INSIGHT_URL=http://redis-insight:5540
+      - REDIS_INSIGHT_URL_EXTERNAL=http://localhost:5540
+      - GRAFANA_URL=http://grafana:3000
+      - GRAFANA_URL_EXTERNAL=http://localhost:3000
+      - PROMETHEUS_URL=http://prometheus:9090
+      - PROMETHEUS_URL_EXTERNAL=http://localhost:9090
+      - ALERTMANAGER_URL=http://alertmanager:9093
+      - ALERTMANAGER_URL_EXTERNAL=http://localhost:9094
+    networks:
+      - cache-network
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+      redis-node-2:
+        condition: service_healthy
+      redis-node-3:
+        condition: service_healthy
+    profiles:
+      - portal
+      - full
+    restart: unless-stopped

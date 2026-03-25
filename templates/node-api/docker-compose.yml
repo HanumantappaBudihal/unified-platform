@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    container_name: {{APP_NAME}}
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - db-network
+      - cache-network
+      - kafka-network
+      - storage-net
+
+networks:
+  db-network:
+    external: true
+    name: db-network
+  cache-network:
+    external: true
+    name: cache-network
+  kafka-network:
+    external: true
+    name: kafka-network
+  storage-net:
+    external: true
+    name: storage-net

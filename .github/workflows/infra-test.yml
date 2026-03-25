@@ -1,0 +1,201 @@
+name: Infrastructure Integration Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test-event-streaming:
+    name: Test Event Streaming (Kafka)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Kafka
+        working-directory: event-streaming-server
+        run: docker compose up -d
+
+      - name: Wait for Kafka health
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec kafka-central /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092 > /dev/null 2>&1; then
+              echo "Kafka is healthy"
+              break
+            fi
+            echo "Waiting for Kafka... ($i/30)"
+            sleep 5
+          done
+
+      - name: Wait for Schema Registry
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8081/subjects > /dev/null 2>&1; then
+              echo "Schema Registry is healthy"
+              break
+            fi
+            sleep 3
+          done
+
+      - name: Wait for REST Proxy
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8082/topics > /dev/null 2>&1; then
+              echo "REST Proxy is healthy"
+              break
+            fi
+            sleep 3
+          done
+
+      - name: Init topics
+        working-directory: event-streaming-server
+        run: bash scripts/init-topics.sh
+
+      - name: Verify topics exist
+        run: |
+          TOPICS=$(docker exec kafka-central /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092)
+          echo "$TOPICS"
+          echo "$TOPICS" | grep -q "orders.checkout.order-created" || (echo "FAIL: topic missing" && exit 1)
+
+      - name: Produce and consume a test message
+        run: |
+          echo '{"test":"message","timestamp":"'$(date -Iseconds)'"}' | \
+            curl -sf -X POST http://localhost:8082/topics/orders.checkout.order-created \
+              -H "Content-Type: application/vnd.kafka.json.v2+json" \
+              -d '{"records":[{"value":{"test":"ci-smoke"}}]}' || (echo "FAIL: produce" && exit 1)
+          echo "Produce: OK"
+
+      - name: Teardown
+        if: always()
+        working-directory: event-streaming-server
+        run: docker compose down -v
+
+  test-cache:
+    name: Test Cache (Redis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate ACL
+        working-directory: cache-server
+        run: bash scripts/generate-acl.sh
+
+      - name: Start Redis cluster
+        working-directory: cache-server
+        run: docker compose up -d
+
+      - name: Wait for Redis nodes
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec redis-node-1 redis-cli -p 6371 --user admin -a admin-secret --no-auth-warning ping 2>/dev/null | grep -q PONG; then
+              echo "Redis node-1 is healthy"
+              break
+            fi
+            sleep 3
+          done
+
+      - name: Init cluster
+        working-directory: cache-server
+        run: bash scripts/init-cluster.sh
+
+      - name: Verify cluster
+        run: |
+          NODES=$(docker exec redis-node-1 redis-cli -p 6371 --user admin -a admin-secret --no-auth-warning cluster nodes 2>/dev/null | wc -l)
+          echo "Cluster nodes: $NODES"
+          [ "$NODES" -ge 6 ] || (echo "FAIL: expected 6 nodes" && exit 1)
+
+      - name: SET/GET test
+        run: |
+          docker exec redis-node-1 redis-cli -p 6371 --user admin -a admin-secret --no-auth-warning -c SET ci:test "hello" > /dev/null
+          VAL=$(docker exec redis-node-1 redis-cli -p 6371 --user admin -a admin-secret --no-auth-warning -c GET ci:test)
+          echo "GET ci:test = $VAL"
+          [ "$VAL" = "hello" ] || (echo "FAIL: value mismatch" && exit 1)
+
+      - name: Teardown
+        if: always()
+        working-directory: cache-server
+        run: docker compose down -v
+
+  test-object-storage:
+    name: Test Object Storage (MinIO)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start MinIO
+        working-directory: object-storage-server
+        run: docker compose up -d
+
+      - name: Wait for MinIO health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sfk http://localhost:9000/minio/health/live > /dev/null 2>&1; then
+              echo "MinIO is healthy"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Wait for init to complete
+        run: |
+          for i in $(seq 1 20); do
+            if docker inspect minio-init 2>/dev/null | grep -q '"Status": "exited"'; then
+              echo "Init complete"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Verify buckets
+        run: |
+          docker run --rm --network storage-net \
+            -e MC_HOST_storage=http://admin:admin-secret-key@storage-nginx:9000 \
+            quay.io/minio/mc:latest ls storage/ | tee /dev/stderr | grep -q "document-svc" || (echo "FAIL: bucket missing" && exit 1)
+
+      - name: Upload and download test
+        run: |
+          echo "ci-test-content" > /tmp/test-file.txt
+          docker run --rm --network storage-net \
+            -v /tmp/test-file.txt:/tmp/test-file.txt \
+            -e MC_HOST_storage=http://admin:admin-secret-key@storage-nginx:9000 \
+            quay.io/minio/mc:latest cp /tmp/test-file.txt storage/document-svc/ci-test.txt
+          echo "Upload: OK"
+
+      - name: Teardown
+        if: always()
+        working-directory: object-storage-server
+        run: docker compose down -v
+
+  portal-build-check:
+    name: Build All Portals
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        portal:
+          - event-streaming-server/portal
+          - cache-server/portal
+          - object-storage-server/portal
+          - unified-gateway-portal/portal
+          - centralized-logging/portal
+          - health-aggregation/portal
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.portal }}
+        run: npm install
+
+      - name: Build
+        working-directory: ${{ matrix.portal }}
+        run: npm run build

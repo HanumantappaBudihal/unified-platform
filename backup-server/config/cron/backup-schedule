@@ -1,0 +1,24 @@
+# ============================================================
+# Backup Schedule — Crontab for backup-runner container
+# ============================================================
+#
+# | Service        | Frequency       | Retention |
+# |----------------|-----------------|-----------|
+# | Redis          | Every 6 hours   | 7 days    |
+# | MinIO          | Daily at 2 AM   | 30 days   |
+# | Kafka metadata | Daily at 3 AM   | 30 days   |
+# | PostgreSQL     | Daily at 1 AM   | 30 days   |
+# ============================================================
+
+# Redis — every 6 hours (00:00, 06:00, 12:00, 18:00)
+0 */6 * * *  root  /bin/bash /backup/scripts/backup-redis.sh >> /backup/data/logs/cron-redis.log 2>&1
+
+# MinIO — daily at 2:00 AM
+0 2 * * *    root  /bin/bash /backup/scripts/backup-minio.sh >> /backup/data/logs/cron-minio.log 2>&1
+
+# Kafka — daily at 3:00 AM
+0 3 * * *    root  /bin/bash /backup/scripts/backup-kafka.sh >> /backup/data/logs/cron-kafka.log 2>&1
+
+# PostgreSQL — daily at 1:00 AM
+0 1 * * *    root  /bin/bash /backup/scripts/backup-postgres.sh >> /backup/data/logs/cron-postgres.log 2>&1
+

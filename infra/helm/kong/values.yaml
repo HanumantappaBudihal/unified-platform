@@ -1,0 +1,29 @@
+image:
+  repository: kong
+  tag: "3.6"
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+database: "off"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "1"
+
+proxy:
+  type: LoadBalancer
+  httpPort: 8000
+  httpsPort: 8443
+
+admin:
+  type: ClusterIP
+  port: 8001
+
+metrics:
+  enabled: true
+  port: 8100

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: minio-storage
+description: MinIO distributed object storage with erasure coding
+type: application
+version: 1.0.0
+appVersion: "latest"

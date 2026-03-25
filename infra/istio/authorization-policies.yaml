@@ -1,0 +1,58 @@
+---
+# Only Platform API can talk to data services (Postgres, Redis, Kafka, MinIO)
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: data-services-access
+  namespace: idp-prod
+spec:
+  selector:
+    matchLabels:
+      tier: data
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/idp-prod/sa/platform-api"
+              - "cluster.local/ns/idp-prod/sa/default"
+---
+# Only Portal and Kong can access Platform API
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: platform-api-access
+  namespace: idp-prod
+spec:
+  selector:
+    matchLabels:
+      app: platform-api
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/idp-prod/sa/portal"
+              - "cluster.local/ns/idp-prod/sa/kong"
+    - to:
+        - operation:
+            paths: ["/api/v1/health"]
+      from:
+        - source:
+            namespaces: ["idp-monitoring"]
+---
+# Kong proxy accepts external traffic
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: kong-external-access
+  namespace: idp-prod
+spec:
+  selector:
+    matchLabels:
+      app: kong
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports: ["8000", "8443"]

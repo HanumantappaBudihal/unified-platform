@@ -1,0 +1,21 @@
+# Persistent data volumes
+data/
+
+# Environment (contains secrets — never commit!)
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# JMX Exporter JAR (downloaded at setup)
+config/kafka/jmx-exporter/*.jar

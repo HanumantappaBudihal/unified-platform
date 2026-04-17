@@ -20,7 +20,7 @@ services:
       - /policies
       - /data
     ports:
-      - "8181:8181"
+      - "8182:8181"
     volumes:
       - ./config/opa/policies:/policies:ro
       - ./config/opa/data:/data:ro

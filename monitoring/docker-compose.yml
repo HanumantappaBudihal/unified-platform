@@ -67,7 +67,7 @@ services:
           memory: 512M
           cpus: '0.5'
     ports:
-      - "3050:3000"
+      - "3051:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}

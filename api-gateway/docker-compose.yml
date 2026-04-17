@@ -75,7 +75,7 @@ services:
       # KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
     ports:
       - "${KONG_PROXY_PORT:-8000}:8000"       # HTTP proxy
-      - "${KONG_PROXY_SSL_PORT:-8443}:8443"   # HTTPS proxy
+      - "${KONG_PROXY_SSL_PORT:-8444}:8443"   # HTTPS proxy
       - "${KONG_ADMIN_PORT:-8001}:8001"       # Admin API
       - "${KONG_ADMIN_SSL_PORT:-8444}:8444"   # Admin API HTTPS
     volumes:

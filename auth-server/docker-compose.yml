@@ -61,7 +61,7 @@ services:
       KC_HTTPS_PORT: "8443"
       KC_HTTP_ENABLED: "true"
     ports:
-      - "8080:8080"
+      - "8180:8080"
       - "8443:8443"
     volumes:
       - ./config/keycloak:/opt/keycloak/data/import:ro

@@ -67,9 +67,32 @@ export async function tenantCommand(action, arg, opts) {
         console.log(chalk.green(`\n  ${res.member.user_id} added as ${res.member.role} to ${slug}.\n`));
         break;
       }
+      case 'usage': {
+        const slug = await currentTenantSlug(opts);
+        const d = await api(`/api/v1/tenants/${slug}/usage`);
+        console.log(chalk.bold(`\n  ${slug}`) + chalk.gray(`  plan ${d.plan.id}`));
+        console.log(`  apps: ${chalk.cyan(d.usage.apps)} / ${d.plan.limits.apps}    data resources: ${chalk.cyan(d.usage.dataResources)} / ${d.plan.limits.dataResources}`);
+        if (d.usage.byType.length) {
+          const table = new Table({ head: ['Resource', 'Count', 'Envs'].map(h => chalk.gray(h)), style: { head: [], border: [] } });
+          for (const r of d.usage.byType) table.push([r.resource_type, r.count, r.environments]);
+          console.log(table.toString());
+        }
+        console.log();
+        break;
+      }
+      case 'billing': {
+        const slug = await currentTenantSlug(opts);
+        const { invoice } = await api(`/api/v1/tenants/${slug}/billing`);
+        console.log(chalk.bold(`\n  Invoice — ${invoice.tenant}`) + chalk.gray(`  ${invoice.period} · plan ${invoice.plan}`));
+        for (const li of invoice.lineItems) {
+          console.log(`  ${li.description.padEnd(28)} ${chalk.gray(`${li.quantity} × $${li.unitPrice}`)}  $${li.amount}`);
+        }
+        console.log(chalk.bold(`  Total: $${invoice.total} ${invoice.currency.toUpperCase()}\n`));
+        break;
+      }
       default:
         console.log(chalk.red(`\n  Unknown action: ${action}`));
-        console.log(chalk.gray('  actions: list, create, token-create, token-list, token-revoke, member-add\n'));
+        console.log(chalk.gray('  actions: list, create, token-create, token-list, token-revoke, member-add, usage, billing\n'));
     }
   } catch (e) {
     console.log(chalk.red(`\n  ${e.message}\n`));

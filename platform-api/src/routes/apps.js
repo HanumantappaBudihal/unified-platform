@@ -1,9 +1,16 @@
 const registry = require('../db/registry');
 const { onboardApp, decommissionApp } = require('../orchestrators');
 const { requireRole, resolveTenant } = require('../rbac');
+const billing = require('../billing');
+
+const DATA_RESOURCES = ['postgres', 'redis', 'kafka', 'minio'];
 
 function slugify(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function planTenant(t) {
+  return { id: t.tenantId, plan: t.plan };
 }
 
 // Resolve the acting tenant for the request, or send 400 and return null.
@@ -60,6 +67,14 @@ async function routes(fastify) {
       return reply.code(409).send({ error: `App "${slug}" already exists in this tenant` });
     }
 
+    const quota = await billing.checkAppQuota(planTenant(t));
+    if (!quota.allowed) {
+      return reply.code(402).send({
+        error: `App limit reached for the '${quota.plan}' plan (${quota.current}/${quota.limit}). Upgrade to add more.`,
+        quota,
+      });
+    }
+
     const app = await registry.createApp({ name, slug, description, ownerId, teamId, tenantId: t.tenantId });
 
     await registry.log({
@@ -78,6 +93,15 @@ async function routes(fastify) {
     if (!app) return reply.code(404).send({ error: 'App not found' });
 
     const { resources, environment } = req.body || {};
+    const requested = (resources || DATA_RESOURCES).filter(r => DATA_RESOURCES.includes(r));
+    const quota = await billing.checkResourceQuota(planTenant(t), requested.length);
+    if (!quota.allowed) {
+      return reply.code(402).send({
+        error: `Data-resource limit reached for the '${quota.plan}' plan (${quota.current}+${quota.addCount} > ${quota.limit}). Upgrade or remove resources.`,
+        quota,
+      });
+    }
+
     const result = await onboardApp(app, {
       resources: resources || ['postgres', 'redis', 'kafka', 'minio'],
       environment: environment || 'dev',
@@ -101,6 +125,16 @@ async function routes(fastify) {
     const { orchestrators } = require('../orchestrators');
     const orchestrator = orchestrators[resourceType];
     if (!orchestrator) return reply.code(400).send({ error: `Unknown resource type: ${resourceType}` });
+
+    if (DATA_RESOURCES.includes(resourceType)) {
+      const quota = await billing.checkResourceQuota(planTenant(t), 1);
+      if (!quota.allowed) {
+        return reply.code(402).send({
+          error: `Data-resource limit reached for the '${quota.plan}' plan (${quota.current}/${quota.limit}). Upgrade or remove resources.`,
+          quota,
+        });
+      }
+    }
 
     const env = environment || 'dev';
     const qualified = `${t.tenantSlug}-${app.slug}`;
@@ -133,7 +167,7 @@ async function routes(fastify) {
     if (orchestrator?.deprovision) {
       await orchestrator.deprovision(`${t.tenantSlug}-${app.slug}`, environment);
     }
-    await registry.removeResource(app.id, type, environment);
+    await registry.removeResource(app.id, type, environment, t.tenantId);
     await registry.log({
       actor: req.identity.actor, action: 'resource.removed', resourceType: type,
       resourceId: app.slug, details: { environment }, tenantId: t.tenantId,
@@ -212,6 +246,14 @@ async function routes(fastify) {
       return reply.code(409).send({
         error: `App already has resources in ${targetEnv}. Send { "force": true } to re-provision.`,
         existingResources: targetResources.map(r => r.resource_type),
+      });
+    }
+
+    const quota = await billing.checkResourceQuota(planTenant(t), dataResources.length);
+    if (!quota.allowed) {
+      return reply.code(402).send({
+        error: `Data-resource limit reached for the '${quota.plan}' plan — cannot promote ${dataResources.length} resources to ${targetEnv} (${quota.current}/${quota.limit}).`,
+        quota,
       });
     }
 

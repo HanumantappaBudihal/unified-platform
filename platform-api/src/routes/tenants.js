@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const registry = require('../db/registry');
 const { requireRole, hasRole } = require('../rbac');
+const billing = require('../billing');
 
 function slugify(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -149,6 +150,33 @@ async function routes(fastify) {
       resourceId: req.params.id, details: {}, tenantId: req.tenant.id,
     });
     return { success: true };
+  });
+
+  // ─── Usage + billing ───
+
+  fastify.get('/api/v1/tenants/:slug/usage', { preHandler: requireRole('viewer') }, async (req, reply) => {
+    await loadTenant(req, reply);
+    if (reply.sent) return;
+    return billing.usageSummary(req.tenant);
+  });
+
+  fastify.get('/api/v1/tenants/:slug/billing', { preHandler: requireRole('viewer') }, async (req, reply) => {
+    await loadTenant(req, reply);
+    if (reply.sent) return;
+    return { invoice: await billing.computeInvoice(req.tenant) };
+  });
+
+  // Push the current invoice to Stripe (no-op local invoice unless STRIPE_SECRET_KEY is set).
+  fastify.post('/api/v1/tenants/:slug/billing/sync', { preHandler: requireRole('owner') }, async (req, reply) => {
+    await loadTenant(req, reply);
+    if (reply.sent) return;
+    const invoice = await billing.computeInvoice(req.tenant);
+    const result = await billing.syncToStripe(req.tenant, invoice);
+    await registry.log({
+      actor: req.identity.actor, action: 'billing.synced', resourceType: 'tenant',
+      resourceId: req.tenant.slug, details: { mode: result.mode, total: invoice.total }, tenantId: req.tenant.id,
+    });
+    return result;
   });
 }
 

@@ -30,12 +30,14 @@ function requireRole(minRole) {
 // Returns { tenantId, tenantSlug } or null (caller should 400) when unresolved.
 async function resolveTenant(req) {
   if (req.identity && !req.identity.superadmin) {
-    return { tenantId: req.identity.tenantId, tenantSlug: req.identity.tenantSlug };
+    const tenant = await registry.getTenantById(req.identity.tenantId);
+    if (!tenant) return null;
+    return { tenantId: tenant.id, tenantSlug: tenant.slug, plan: tenant.plan };
   }
   const slug = req.query?.tenant || req.headers['x-tenant'] || 'default';
   const tenant = await registry.getTenant(slug);
   if (!tenant) return null;
-  return { tenantId: tenant.id, tenantSlug: tenant.slug };
+  return { tenantId: tenant.id, tenantSlug: tenant.slug, plan: tenant.plan };
 }
 
 module.exports = { ROLE_RANK, hasRole, requireRole, resolveTenant };

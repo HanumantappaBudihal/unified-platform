@@ -8,6 +8,9 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+// Metered/billable data resource types (Keycloak/OPA/Kong are free platform services).
+const DATA_RESOURCES = ['postgres', 'redis', 'kafka', 'minio'];
+
 const registry = {
   // ─── Schema bootstrap ───
 
@@ -160,6 +163,18 @@ const registry = {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_tokens_tenant ON platform_api_tokens(tenant_id);
+
+        CREATE TABLE IF NOT EXISTS platform_usage_events (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          tenant_id UUID NOT NULL REFERENCES platform_tenants(id) ON DELETE CASCADE,
+          app_id UUID,
+          metric VARCHAR(50) NOT NULL,
+          resource_type VARCHAR(20),
+          environment VARCHAR(50),
+          quantity INTEGER NOT NULL DEFAULT 1,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_usage_tenant ON platform_usage_events(tenant_id, created_at DESC);
 
         ALTER TABLE platform_apps           ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES platform_tenants(id) ON DELETE CASCADE;
         ALTER TABLE platform_app_resources  ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES platform_tenants(id) ON DELETE CASCADE;
@@ -362,6 +377,9 @@ const registry = {
        RETURNING *`,
       [appId, tenantId || null, resourceType, environment || 'dev', resourceConfig || {}, credentials || {}]
     );
+    if (tenantId && DATA_RESOURCES.includes(resourceType)) {
+      await this.recordUsageEvent({ tenantId, appId, metric: 'resource.provisioned', resourceType, environment, quantity: 1 }).catch(() => {});
+    }
     return rows[0];
   },
 
@@ -376,11 +394,14 @@ const registry = {
     return rows;
   },
 
-  async removeResource(appId, resourceType, environment) {
+  async removeResource(appId, resourceType, environment, tenantId) {
     await pool.query(
       'DELETE FROM platform_app_resources WHERE app_id = $1 AND resource_type = $2 AND environment = $3',
       [appId, resourceType, environment || 'dev']
     );
+    if (tenantId && DATA_RESOURCES.includes(resourceType)) {
+      await this.recordUsageEvent({ tenantId, appId, metric: 'resource.deprovisioned', resourceType, environment, quantity: -1 }).catch(() => {});
+    }
   },
 
   // ─── Teams ───
@@ -449,6 +470,53 @@ const registry = {
     params.push(offset || 0);
     query += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
     const { rows } = await pool.query(query, params);
+    return rows;
+  },
+
+  // ─── Billing / usage ───
+
+  async countApps(tenantId) {
+    const { rows } = await pool.query(
+      "SELECT count(*)::int AS n FROM platform_apps WHERE tenant_id = $1 AND status <> 'decommissioned'",
+      [tenantId]
+    );
+    return rows[0].n;
+  },
+
+  // Billable data resources (postgres/redis/kafka/minio) currently provisioned.
+  async countDataResources(tenantId) {
+    const { rows } = await pool.query(
+      `SELECT count(*)::int AS n FROM platform_app_resources
+       WHERE tenant_id = $1 AND resource_type IN ('postgres','redis','kafka','minio')`,
+      [tenantId]
+    );
+    return rows[0].n;
+  },
+
+  async usageByType(tenantId) {
+    const { rows } = await pool.query(
+      `SELECT resource_type, count(*)::int AS count, count(DISTINCT environment)::int AS environments
+       FROM platform_app_resources WHERE tenant_id = $1
+       GROUP BY resource_type ORDER BY resource_type`,
+      [tenantId]
+    );
+    return rows;
+  },
+
+  async recordUsageEvent({ tenantId, appId, metric, resourceType, environment, quantity }) {
+    await pool.query(
+      `INSERT INTO platform_usage_events (tenant_id, app_id, metric, resource_type, environment, quantity)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [tenantId, appId || null, metric, resourceType || null, environment || null, quantity ?? 1]
+    );
+  },
+
+  async listUsageEvents(tenantId, limit) {
+    const { rows } = await pool.query(
+      `SELECT metric, resource_type, environment, quantity, created_at
+       FROM platform_usage_events WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2`,
+      [tenantId, limit || 25]
+    );
     return rows;
   },
 

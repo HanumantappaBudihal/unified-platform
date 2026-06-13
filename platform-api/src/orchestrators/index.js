@@ -80,7 +80,7 @@ async function decommissionApp(app, { environment = 'dev', tenantSlug, actor } =
     if (!orchestrator?.deprovision) continue;
     try {
       await orchestrator.deprovision(slug, environment);
-      await registry.removeResource(app.id, resource.resource_type, environment);
+      await registry.removeResource(app.id, resource.resource_type, environment, app.tenant_id);
     } catch (e) { errors.push({ service: resource.resource_type, error: e.message }); }
   }
 

@@ -37,7 +37,7 @@ program
 program
   .command('tenant')
   .description('Manage tenants, members, and API tokens')
-  .argument('<action>', 'list | create | token-create | token-list | token-revoke | member-add')
+  .argument('<action>', 'list | create | token-create | token-list | token-revoke | member-add | usage | billing')
   .argument('[arg]', 'name / token-id / userId, depending on the action')
   .option('--plan <plan>', 'Plan for tenant create')
   .option('--owner <userId>', 'Owner user id for tenant create')

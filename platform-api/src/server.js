@@ -10,6 +10,9 @@ async function start() {
   await registry.ensureSchema();
   // Apply the multi-tenancy migration (tenants / members / api tokens / tenant_id).
   await registry.runMigrations();
+  // Hash-chain any pre-existing audit rows so the tamper-evident chain is complete.
+  const backfilled = await registry.backfillAuditChain();
+  if (backfilled) fastify.log.info(`Backfilled ${backfilled} audit entries into the hash chain`);
   if (config.apiToken) {
     fastify.log.info('Control-plane auth ENABLED (bearer token required)');
   } else {

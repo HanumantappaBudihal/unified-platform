@@ -11,6 +11,26 @@ function hashToken(token) {
 // Metered/billable data resource types (Keycloak/OPA/Kong are free platform services).
 const DATA_RESOURCES = ['postgres', 'redis', 'kafka', 'minio'];
 
+// ─── Tamper-evident audit chain helpers ───
+const AUDIT_GENESIS = '0'.repeat(64);
+
+// Deterministic JSON (sorted keys) so the hash is stable across insert/verify.
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(value[k])).join(',') + '}';
+}
+
+function auditHash(prevHash, e) {
+  const content = stableStringify({
+    actor: e.actor, action: e.action, resource_type: e.resource_type,
+    resource_id: e.resource_id ?? null, details: e.details ?? {},
+    tenant_id: e.tenant_id ?? null, created_at: e.created_at,
+  });
+  return crypto.createHash('sha256').update(prevHash + content).digest('hex');
+}
+
 const registry = {
   // ─── Schema bootstrap ───
 
@@ -181,6 +201,13 @@ const registry = {
         ALTER TABLE platform_audit_log      ADD COLUMN IF NOT EXISTS tenant_id UUID;
         CREATE INDEX IF NOT EXISTS idx_apps_tenant ON platform_apps(tenant_id);
         CREATE INDEX IF NOT EXISTS idx_audit_tenant ON platform_audit_log(tenant_id);
+
+        -- Tamper-evident audit chain: each row's hash covers the previous hash,
+        -- so altering any past entry breaks the chain from that point on (SOC2).
+        ALTER TABLE platform_audit_log ADD COLUMN IF NOT EXISTS seq BIGSERIAL;
+        ALTER TABLE platform_audit_log ADD COLUMN IF NOT EXISTS prev_hash CHAR(64);
+        ALTER TABLE platform_audit_log ADD COLUMN IF NOT EXISTS hash CHAR(64);
+        CREATE INDEX IF NOT EXISTS idx_audit_seq ON platform_audit_log(seq);
       `);
 
       // Backfill a default tenant and attach any pre-tenant rows to it.
@@ -451,12 +478,73 @@ const registry = {
 
   // ─── Audit ───
 
+  // Append a tamper-evident audit entry. An advisory lock serializes writers so
+  // the hash chain stays consistent under concurrency.
   async log({ actor, action, resourceType, resourceId, details, tenantId }) {
-    await pool.query(
-      `INSERT INTO platform_audit_log (actor, action, resource_type, resource_id, details, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [actor, action, resourceType, resourceId || null, details || {}, tenantId || null]
+    const createdAt = new Date().toISOString();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(48271)');
+      const { rows: [prev] } = await client.query(
+        'SELECT hash FROM platform_audit_log WHERE hash IS NOT NULL ORDER BY seq DESC LIMIT 1'
+      );
+      const prevHash = prev?.hash || AUDIT_GENESIS;
+      const entry = {
+        actor, action, resource_type: resourceType, resource_id: resourceId || null,
+        details: details || {}, tenant_id: tenantId || null, created_at: createdAt,
+      };
+      const hash = auditHash(prevHash, entry);
+      await client.query(
+        `INSERT INTO platform_audit_log (actor, action, resource_type, resource_id, details, tenant_id, created_at, prev_hash, hash)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [actor, action, resourceType, resourceId || null, details || {}, tenantId || null, createdAt, prevHash, hash]
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
+    }
+  },
+
+  // Hash any pre-existing (un-chained) rows in seq order. Idempotent.
+  async backfillAuditChain() {
+    const { rows } = await pool.query(
+      `SELECT seq, actor, action, resource_type, resource_id, details, tenant_id, created_at
+       FROM platform_audit_log WHERE hash IS NULL ORDER BY seq ASC`
     );
+    if (!rows.length) return 0;
+    const { rows: [last] } = await pool.query(
+      'SELECT hash FROM platform_audit_log WHERE hash IS NOT NULL ORDER BY seq DESC LIMIT 1'
+    );
+    let prevHash = last?.hash || AUDIT_GENESIS;
+    for (const r of rows) {
+      const entry = { ...r, created_at: new Date(r.created_at).toISOString() };
+      const hash = auditHash(prevHash, entry);
+      await pool.query('UPDATE platform_audit_log SET prev_hash = $1, hash = $2 WHERE seq = $3', [prevHash, hash, r.seq]);
+      prevHash = hash;
+    }
+    return rows.length;
+  },
+
+  // Walk the chain and confirm every entry's hash still matches.
+  async verifyAuditChain() {
+    const { rows } = await pool.query(
+      `SELECT seq, actor, action, resource_type, resource_id, details, tenant_id, created_at, prev_hash, hash
+       FROM platform_audit_log ORDER BY seq ASC`
+    );
+    let prevHash = AUDIT_GENESIS;
+    for (const r of rows) {
+      const entry = { ...r, created_at: new Date(r.created_at).toISOString() };
+      const expected = auditHash(prevHash, entry);
+      if (r.prev_hash !== prevHash || r.hash !== expected) {
+        return { valid: false, brokenAtSeq: Number(r.seq), expectedHash: expected, foundHash: r.hash, entries: rows.length };
+      }
+      prevHash = r.hash;
+    }
+    return { valid: true, entries: rows.length, headHash: prevHash };
   },
 
   async getAuditLog({ tenantId, limit, offset } = {}) {

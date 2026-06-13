@@ -43,6 +43,8 @@ const config = {
     adminUser: process.env.KEYCLOAK_ADMIN_USER || 'admin',
     adminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
     realm: process.env.KEYCLOAK_APP_REALM || 'applications',
+    // Realm whose OIDC tokens the control plane accepts for human SSO.
+    ssoRealm: process.env.KEYCLOAK_SSO_REALM || 'platform',
   },
 
   opa: {

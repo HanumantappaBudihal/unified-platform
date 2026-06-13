@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import TenantBadge from './TenantBadge';
 
 interface NavItem { href: string; label: string; icon: string }
 interface NavSection { title: string; color: string; icon: string; items: NavItem[] }
@@ -251,6 +252,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
+        <TenantBadge />
         <div className="flex items-center gap-3 px-2">
           <div className="relative">
             <span className={`block w-2.5 h-2.5 rounded-full ${

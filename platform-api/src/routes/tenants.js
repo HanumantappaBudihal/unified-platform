@@ -27,6 +27,18 @@ async function loadTenant(req, reply) {
 }
 
 async function routes(fastify) {
+  // Who am I — resolves the calling token to its tenant + role.
+  fastify.get('/api/v1/whoami', async (req) => {
+    const id = req.identity || {};
+    if (id.superadmin) return { superadmin: true, role: 'owner', tenant: req.query.tenant || null };
+    const tenant = id.tenantId ? await registry.getTenantById(id.tenantId) : null;
+    return {
+      superadmin: false,
+      role: id.role || null,
+      tenant: tenant ? { slug: tenant.slug, name: tenant.name, plan: tenant.plan } : null,
+    };
+  });
+
   // Create a tenant (superadmin only) + seed an owner + an owner API token.
   fastify.post('/api/v1/tenants', async (req, reply) => {
     if (!req.identity?.superadmin) {

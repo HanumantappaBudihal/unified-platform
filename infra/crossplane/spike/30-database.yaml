@@ -1,0 +1,11 @@
+apiVersion: postgresql.sql.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: acme-billing
+  annotations:
+    crossplane.io/external-name: acme_billing_db
+spec:
+  forProvider: {}
+  providerConfigRef:
+    name: default
+  deletionPolicy: Delete

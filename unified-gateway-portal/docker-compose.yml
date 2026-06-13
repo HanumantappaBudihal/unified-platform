@@ -23,6 +23,9 @@ services:
       - "3006:3000"
     environment:
       PLATFORM_API_URL: http://host.docker.internal:3020
+      # Superadmin fallback for the control-plane API when no tenant is signed in.
+      # In production, drop this and require tenant sign-in / SSO instead.
+      PLATFORM_API_TOKEN: super-admin-token-xyz
       KAFKA_PORTAL_URL: http://host.docker.internal:3001
       REDIS_PORTAL_URL: http://host.docker.internal:3002
       MINIO_PORTAL_URL: http://host.docker.internal:3004

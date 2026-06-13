@@ -1,6 +1,10 @@
 const config = {
   port: parseInt(process.env.PLATFORM_API_PORT || '3020'),
 
+  // Control-plane auth. When set, all /api/v1/* routes (except health) require
+  // `Authorization: Bearer <token>`. Left unset, auth is disabled (local dev).
+  apiToken: process.env.PLATFORM_API_TOKEN || null,
+
   platformDb: {
     host: process.env.PLATFORM_DB_HOST || 'shared-postgres',
     port: parseInt(process.env.PLATFORM_DB_PORT || '5432'),

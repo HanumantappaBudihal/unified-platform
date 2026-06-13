@@ -2,6 +2,7 @@
 import { program } from 'commander';
 import { initCommand } from '../src/commands/init.js';
 import { onboardCommand } from '../src/commands/onboard.js';
+import { decommissionCommand } from '../src/commands/decommission.js';
 import { statusCommand } from '../src/commands/status.js';
 import { resourcesCommand } from '../src/commands/resources.js';
 import { envCommand } from '../src/commands/env.js';
@@ -48,6 +49,14 @@ program
   .option('-a, --app <slug>', 'App slug')
   .option('--credentials', 'Show credentials')
   .action(statusCommand);
+
+program
+  .command('decommission')
+  .description('Tear down all resources for an app in an environment')
+  .option('-a, --app <slug>', 'App slug (defaults to current directory name)')
+  .option('-e, --env <environment>', 'Target environment', 'dev')
+  .option('-y, --yes', 'Skip the confirmation prompt')
+  .action(decommissionCommand);
 
 program
   .command('resources')

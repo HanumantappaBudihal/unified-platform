@@ -59,6 +59,10 @@ services:
       # generated (only generator scripts exist), so HTTPS would crash startup.
       # For prod, run certs/scripts/generate-certs.sh and re-enable KC_HTTPS_*.
       KC_HTTP_ENABLED: "true"
+      # Stable frontend URL so issued tokens' `iss` is browser-reachable, while
+      # backchannel (token/jwks) can still be fetched over host.docker.internal.
+      KC_HOSTNAME_URL: http://localhost:8180
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
     ports:
       - "8180:8080"
     volumes:

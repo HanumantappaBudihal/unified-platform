@@ -38,12 +38,13 @@ services:
       KAFKA_PROMETHEUS_URL: http://host.docker.internal:9090
       REDIS_PROMETHEUS_URL: http://host.docker.internal:9091
       MINIO_PROMETHEUS_URL: http://host.docker.internal:9097
-      # SSO (uncomment to enable Keycloak authentication)
-      # NEXTAUTH_URL: http://localhost:3006
-      # NEXTAUTH_SECRET: change-me-to-a-random-secret
-      # KEYCLOAK_ISSUER: http://host.docker.internal:8080/realms/infrastructure
-      # KEYCLOAK_CLIENT_ID: gateway-portal
-      # KEYCLOAK_CLIENT_SECRET:
+      # SSO via Keycloak (split browser/server endpoints for docker).
+      NEXTAUTH_URL: http://localhost:3006
+      NEXTAUTH_SECRET: dev-nextauth-secret-change-in-prod
+      KEYCLOAK_ISSUER: http://localhost:8180/realms/platform
+      KEYCLOAK_INTERNAL_ISSUER: http://host.docker.internal:8180/realms/platform
+      KEYCLOAK_CLIENT_ID: gateway-portal
+      KEYCLOAK_CLIENT_SECRET: gateway-portal-secret
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

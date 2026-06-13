@@ -2,6 +2,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# MinIO admin client — used by the minio orchestrator to create per-app
+# service accounts, policies, and bucket quotas (not covered by the S3 SDK).
+RUN apk add --no-cache ca-certificates curl \
+  && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
+  && chmod +x /usr/local/bin/mc
+
 COPY package.json ./
 RUN npm install --production
 

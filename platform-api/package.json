@@ -14,7 +14,9 @@
     "kafkajs": "^2.2.4",
     "minio": "^8.0.5",
     "ioredis": "^5.4.2",
-    "nanoid": "^5.1.5"
+    "jose": "^5.9.6",
+    "nanoid": "^5.1.5",
+    "stripe": "^17.4.0"
   },
   "engines": {
     "node": ">=20"

@@ -1,6 +1,10 @@
 const config = {
   port: parseInt(process.env.PLATFORM_API_PORT || '3020'),
 
+  // Control-plane auth. When set, all /api/v1/* routes (except health) require
+  // `Authorization: Bearer <token>`. Left unset, auth is disabled (local dev).
+  apiToken: process.env.PLATFORM_API_TOKEN || null,
+
   platformDb: {
     host: process.env.PLATFORM_DB_HOST || 'shared-postgres',
     port: parseInt(process.env.PLATFORM_DB_PORT || '5432'),
@@ -39,6 +43,8 @@ const config = {
     adminUser: process.env.KEYCLOAK_ADMIN_USER || 'admin',
     adminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
     realm: process.env.KEYCLOAK_APP_REALM || 'applications',
+    // Realm whose OIDC tokens the control plane accepts for human SSO.
+    ssoRealm: process.env.KEYCLOAK_SSO_REALM || 'platform',
   },
 
   opa: {

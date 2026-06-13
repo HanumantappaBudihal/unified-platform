@@ -12,11 +12,10 @@ async function getAdminToken() {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        grant_type: 'client_credentials',
+        grant_type: 'password',
         client_id: 'admin-cli',
         username: config.keycloak.adminUser,
         password: config.keycloak.adminPassword,
-        grant_type: 'password',
       }),
     }
   );

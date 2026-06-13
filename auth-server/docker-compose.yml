@@ -55,14 +55,16 @@ services:
       # Health
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
-      # TLS
-      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/certs/server.crt
-      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/certs/server.key
-      KC_HTTPS_PORT: "8443"
+      # HTTP only for local dev — the self-signed certs under ../certs are not
+      # generated (only generator scripts exist), so HTTPS would crash startup.
+      # For prod, run certs/scripts/generate-certs.sh and re-enable KC_HTTPS_*.
       KC_HTTP_ENABLED: "true"
+      # Stable frontend URL so issued tokens' `iss` is browser-reachable, while
+      # backchannel (token/jwks) can still be fetched over host.docker.internal.
+      KC_HOSTNAME_URL: http://localhost:8180
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
     ports:
       - "8180:8080"
-      - "8443:8443"
     volumes:
       - ./config/keycloak:/opt/keycloak/data/import:ro
       - ../certs:/opt/keycloak/certs:ro

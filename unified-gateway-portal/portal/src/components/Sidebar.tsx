@@ -14,6 +14,7 @@ const platformSection: NavSection = {
   items: [
     { href: '/apps', label: 'Applications', icon: '▦' },
     { href: '/apps/new', label: 'Onboard App', icon: '+' },
+    { href: '/billing', label: 'Billing & Usage', icon: '$' },
     { href: '/teams', label: 'Teams', icon: '⧉' },
     { href: '/audit', label: 'Audit Log', icon: '⊟' },
   ],

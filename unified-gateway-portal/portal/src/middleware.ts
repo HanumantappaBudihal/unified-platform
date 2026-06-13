@@ -13,12 +13,20 @@ export default function middleware(req: NextRequest, event: any) {
   if (!process.env.NEXTAUTH_URL) {
     return NextResponse.next();
   }
+  // A token-based tenant session (cookie) also satisfies the gate — the proxy
+  // forwards it and the API does the real validation. This lets the portal be
+  // used via Keycloak SSO *or* a tenant API token.
+  if (req.cookies.get('platform_token')) {
+    return NextResponse.next();
+  }
   return (enforce as any)(req, event);
 }
 
 export const config = {
-  // Protect all routes except auth endpoints, API routes, and static assets
+  // Gate PAGES only. All /api/* routes self-authenticate (the proxy forwards the
+  // SSO/tenant token; /api/session manages the cookie), so they must bypass the
+  // middleware — otherwise the portal can't call its own API or sign in.
   matcher: [
-    '/((?!api/auth|auth/signin|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|auth/signin|signin|_next/static|_next/image|favicon.ico).*)',
   ],
 };

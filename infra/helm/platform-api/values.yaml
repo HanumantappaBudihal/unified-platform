@@ -5,6 +5,26 @@ image:
 
 replicas: 2
 
+# Wire the registry DB to a CloudNativePG cluster. When enabled, DB host + creds
+# come from the CNPG-generated services/secrets ({cluster}-rw, {cluster}-app,
+# {cluster}-superuser) instead of the static config/secret above.
+cnpg:
+  enabled: false
+  clusterName: platform-db
+
+# uid/gid the container runs as (node:alpine "node" user) — required for runAsNonRoot.
+podUser: 1000
+
+# Static secrets for the non-CNPG path. When cnpg.enabled, the DB creds are sourced
+# from the CNPG secrets instead and these may stay empty.
+secrets:
+  platformDbPassword: ""
+  redisPassword: ""
+  minioAccessKey: ""
+  minioSecretKey: ""
+  keycloakAdminUser: ""
+  keycloakAdminPassword: ""
+
 service:
   type: ClusterIP
   port: 3020

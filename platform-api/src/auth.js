@@ -12,7 +12,7 @@ function tokensMatch(provided, expected) {
 
 function isPublic(url) {
   const path = url.split('?')[0];
-  return path === '/' || path === '/api/v1/health' || path.startsWith('/api/v1/health/');
+  return path === '/' || path === '/metrics' || path === '/api/v1/health' || path.startsWith('/api/v1/health/');
 }
 
 // ─── Keycloak SSO (JWT) ───

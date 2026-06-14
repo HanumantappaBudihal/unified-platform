@@ -84,6 +84,7 @@ services:
       # GF_AUTH_GENERIC_OAUTH_API_URL: http://host.docker.internal:8080/realms/infrastructure/protocol/openid-connect/userinfo
     volumes:
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus

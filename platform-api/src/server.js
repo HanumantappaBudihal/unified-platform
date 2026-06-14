@@ -3,6 +3,7 @@ const cors = require('@fastify/cors');
 const config = require('./config');
 const registry = require('./db/registry');
 const { authHook } = require('./auth');
+const metrics = require('./metrics');
 
 async function start() {
   // Ensure the registry schema exists before serving traffic. Idempotent, so
@@ -27,6 +28,17 @@ async function start() {
 
   // Require a bearer token on all routes when PLATFORM_API_TOKEN is set.
   fastify.addHook('onRequest', authHook);
+
+  // Record per-tenant golden-signal metrics for every response.
+  fastify.addHook('onResponse', async (req, reply) => {
+    try { metrics.recordResponse(req, reply); } catch { /* never break a response on metrics */ }
+  });
+
+  // Prometheus scrape endpoint (public — restrict via NetworkPolicy in prod).
+  fastify.get('/metrics', async (req, reply) => {
+    reply.header('Content-Type', metrics.register.contentType);
+    return metrics.register.metrics();
+  });
 
   // Register routes
   await fastify.register(require('./routes/tenants'));

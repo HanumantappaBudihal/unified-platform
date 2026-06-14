@@ -1,0 +1,65 @@
+groups:
+  # ─── Golden-signal SLIs (overall + per tenant) ───
+  - name: platform-api-sli
+    interval: 30s
+    rules:
+      - record: platform:http_requests:rate5m
+        expr: sum by (tenant) (rate(platform_http_requests_total[5m]))
+
+      - record: platform:http_error_ratio:rate5m
+        expr: |
+          sum by (tenant) (rate(platform_http_errors_total[5m]))
+          /
+          clamp_min(sum by (tenant) (rate(platform_http_requests_total[5m])), 1)
+
+      - record: platform:http_latency:p99_5m
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (tenant, le) (rate(platform_http_request_duration_seconds_bucket[5m]))
+          )
+
+      - record: platform:availability:ratio5m
+        expr: |
+          1 - (
+            sum(rate(platform_http_errors_total[5m]))
+            /
+            clamp_min(sum(rate(platform_http_requests_total[5m])), 1)
+          )
+
+  # ─── SLOs: 99.9% availability, p99 < 500ms. Error budget = 0.1%. ───
+  - name: platform-api-slo-alerts
+    rules:
+      # Multi-window fast burn (>14.4× budget over both 5m and 1h) → page.
+      - alert: PlatformAvailabilityFastBurn
+        expr: |
+          (sum(rate(platform_http_errors_total[5m])) / clamp_min(sum(rate(platform_http_requests_total[5m])), 1)) > (14.4 * 0.001)
+          and
+          (sum(rate(platform_http_errors_total[1h])) / clamp_min(sum(rate(platform_http_requests_total[1h])), 1)) > (14.4 * 0.001)
+        for: 2m
+        labels:
+          severity: critical
+          slo: availability
+        annotations:
+          summary: "Availability SLO fast burn — error budget burning >14.4× (99.9% target)"
+
+      # Slow burn (>3× budget over 6h) → ticket.
+      - alert: PlatformAvailabilitySlowBurn
+        expr: |
+          (sum(rate(platform_http_errors_total[6h])) / clamp_min(sum(rate(platform_http_requests_total[6h])), 1)) > (3 * 0.001)
+        for: 15m
+        labels:
+          severity: warning
+          slo: availability
+        annotations:
+          summary: "Availability SLO slow burn — error budget burning >3× over 6h"
+
+      - alert: PlatformLatencySLOBreach
+        expr: |
+          histogram_quantile(0.99, sum by (le) (rate(platform_http_request_duration_seconds_bucket[5m]))) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          slo: latency
+        annotations:
+          summary: "p99 latency > 500ms over 5m (latency SLO breach)"

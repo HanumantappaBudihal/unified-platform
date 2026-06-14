@@ -4,6 +4,7 @@ global:
 
 rule_files:
   - /etc/prometheus/alert-rules.yml
+  - /etc/prometheus/slo-rules.yml
 
 alerting:
   alertmanagers:
@@ -81,9 +82,9 @@ scrape_configs:
         labels:
           service: keycloak
 
-  # ─── Platform API ───
+  # ─── Platform API (per-tenant golden signals) ───
   - job_name: platform-api
-    metrics_path: /api/v1/health
+    metrics_path: /metrics
     static_configs:
       - targets: ['platform-api:3020']
         labels:

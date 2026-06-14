@@ -1,0 +1,30 @@
+# Per-tenant Postgres golden-path: a dedicated 2-instance HA cluster per tenant
+# (hard data-tier isolation for paid tiers — see PRODUCT-ROADMAP.md §4.A). This is
+# the declarative target the imperative postgres.js orchestrator converges onto;
+# the platform-api / Crossplane Composition stamps one of these per tenant.
+#
+# Substitute __TENANT__ (e.g. acme-corp) when rendering.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tenant-__TENANT__
+  namespace: tenant-__TENANT__
+  labels:
+    app.kubernetes.io/part-of: idp-platform
+    idp.dev/tenant: __TENANT__
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  primaryUpdateStrategy: unsupervised
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi

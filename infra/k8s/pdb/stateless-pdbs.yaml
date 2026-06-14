@@ -1,0 +1,25 @@
+# PodDisruptionBudgets keep the stateless control-plane tiers available during
+# voluntary disruptions (node drains, rolling updates) — part of the zero-downtime
+# story. Pair with replicas>=2 + rolling updates + readiness probes on each
+# Deployment. (CNPG and Strimzi manage their own PDBs for the data tiers.)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-api
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: platform-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gateway-portal
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: gateway-portal

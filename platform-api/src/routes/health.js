@@ -14,6 +14,22 @@ async function checkService(name, url, timeout = 3000) {
 }
 
 async function routes(fastify) {
+  // Liveness: the process is up. Must be cheap (no external calls) so a slow
+  // dependency never triggers a restart loop.
+  fastify.get('/api/v1/health/live', async () => ({ status: 'ok' }));
+
+  // Readiness: can we serve? Gate only on the critical dependency (the registry
+  // DB) — NOT the aggregate dashboard below, which probes many optional services.
+  fastify.get('/api/v1/health/ready', async (req, reply) => {
+    try {
+      await registry.ping();
+      return { status: 'ready' };
+    } catch {
+      return reply.code(503).send({ status: 'not-ready', reason: 'registry database unavailable' });
+    }
+  });
+
+  // Aggregate dashboard view (used by the portal, not by k8s probes).
   fastify.get('/api/v1/health', async () => {
     const checks = await Promise.all([
       registry.ping().then(() => ({ name: 'platform-db', status: 'healthy' })).catch(() => ({ name: 'platform-db', status: 'offline' })),

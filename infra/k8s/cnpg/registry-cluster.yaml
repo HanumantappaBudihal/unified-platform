@@ -19,6 +19,8 @@ spec:
   instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   primaryUpdateStrategy: unsupervised      # auto-failover without manual approval
+  # platform-api uses the superuser for migrations + provisioning app databases.
+  enableSuperuserAccess: true
 
   bootstrap:
     initdb:

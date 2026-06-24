@@ -1,5 +1,10 @@
 # AuthZ Server — Integration Guide
 
+> **Scope: operator / infra-op authorization only.** This OPA instance decides
+> who may view and operate the shared backing services and operator portals. It
+> does **not** decide app/user/tenant permissions — that is owned by the Seiton
+> Platform control plane and its own OPA.
+
 ## Services
 
 | Service | URL | Purpose |
@@ -24,33 +29,45 @@ curl -X POST http://localhost:8181/v1/data/authz/allow \
   -H "Content-Type: application/json" \
   -d '{
     "input": {
-      "user": "demo-user",
-      "app": "task-manager",
-      "action": "read",
-      "resource": "task",
-      "project": "alpha"
+      "user": "ops-alice",
+      "action": "restart",
+      "target": "kafka"
     }
   }'
 # → { "result": true }
 ```
 
-## Input Fields
+## Input Fields (operator domain)
 
 | Field | Required | Description |
 |---|---|---|
-| `user` | Yes | Username or JWT `sub` |
-| `app` | Yes | Application client ID |
-| `action` | Yes | `read`, `create`, `update`, `delete` |
-| `resource` | No | Resource type |
-| `resource_id` | No | Specific resource ID |
-| `project` | No | Project scope |
+| `user` | Yes | Operator id / JWT `sub` |
+| `action` | Yes | `read`/`list`/`metrics` (read) · `scale`/`restart`/`reload`/`provision`/`decommission`/`configure`/`rotate` (operate) |
+| `target` | For target ops | Infra component: `kafka`, `redis`, `minio`, `postgres`, `gateway`, `monitoring`, `logging`, `backup` |
+| `portal` | For UI access | Operator portal id, e.g. `gateway-portal`, `grafana`, `minio-console` |
 
-## Adding Users/Roles
+## Roles
 
-Edit `config/opa/data/roles.json`, then restart OPA:
+Roles are pushed to OPA at `data.users[<user>]` (e.g. via the portal or
+`PUT /v1/data/users`):
+
+```jsonc
+{
+  "ops-alice": { "infra": { "role": "infra-admin" } },     // full control of any target
+  "ops-bob":   { "infra": { "role": "infra-operator" } },  // read + operate targets
+  "ops-cara":  { "infra": { "role": "infra-viewer" } },    // read-only
+  "ops-root":  { "global_roles": ["infra-super-admin"] }   // unrestricted
+}
+```
+
+## Policies & tests
+
+Policies live in `config/opa/policies/` (`authz.rego` base + `operator.rego`).
+Validate locally with the OPA CLI:
 
 ```bash
-docker compose restart authz-opa
+opa check config/opa/policies
+opa test  config/opa/policies   # operator_test.rego
 ```
 
 ## Adding Policies

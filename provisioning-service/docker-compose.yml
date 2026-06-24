@@ -1,0 +1,24 @@
+services:
+  provisioning-service:
+    build: .
+    container_name: provisioning-service
+    env_file: .env
+    ports:
+      - "${PORT:-3030}:3030"
+    restart: unless-stopped
+    # This service talks to the backing-service admin endpoints (Kafka, Redis,
+    # MinIO, Postgres, Kong admin). Attach it to the networks that expose those
+    # admin ports in your environment, e.g.:
+    # networks:
+    #   - event-streaming-network
+    #   - cache-network
+    #   - object-storage-network
+    #   - database-network
+    #   - api-gateway-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 64M

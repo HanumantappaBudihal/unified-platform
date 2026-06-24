@@ -1,0 +1,22 @@
+{
+  "name": "@infra/provisioning-service",
+  "version": "1.0.0",
+  "description": "InfraMatrix provisioning service — implements infra resource provisioning (Kafka/Redis/MinIO/Postgres/Gateway) on behalf of Seiton Platform onboarding. Stateless: provisions and returns config/credentials; the caller persists state.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.3.3",
+    "@fastify/cors": "^11.0.0",
+    "kafkajs": "^2.2.4",
+    "ioredis": "^5.4.2",
+    "minio": "^8.0.5",
+    "pg": "^8.13.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

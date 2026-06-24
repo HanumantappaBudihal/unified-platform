@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
+import Providers from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: 'Authorization Server',
@@ -11,10 +12,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="bg-gray-50 text-gray-800">
-        <Sidebar />
-        <main className="lg:ml-72 min-h-screen transition-all duration-300">
-          {children}
-        </main>
+        <Providers>
+          <Sidebar />
+          <main className="lg:ml-72 min-h-screen transition-all duration-300">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

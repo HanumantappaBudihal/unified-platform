@@ -282,6 +282,7 @@ volumes:
 networks:
   storage-net:
     driver: bridge
+    name: storage-net
   email-network:
     external: true
     name: email-network

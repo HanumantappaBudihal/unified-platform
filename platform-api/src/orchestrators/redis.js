@@ -33,8 +33,9 @@ async function provision(appSlug, environment = 'dev') {
       '+@all', '-@admin', '-@dangerous'
     );
 
-    // Persist ACL to disk
-    await redis.call('ACL', 'SAVE');
+    // Persist ACL to disk — best-effort. Fails if the node has no writable
+    // aclfile (e.g. config mounted read-only); the user still exists in memory.
+    await redis.call('ACL', 'SAVE').catch((e) => console.warn(`Redis ACL SAVE non-fatal: ${e.message}`));
 
     // Propagate to all cluster nodes
     const nodes = await redis.call('CLUSTER', 'NODES');

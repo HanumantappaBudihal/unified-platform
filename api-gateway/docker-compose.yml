@@ -79,8 +79,8 @@ services:
       - "${KONG_ADMIN_PORT:-8001}:8001"       # Admin API
       - "${KONG_ADMIN_SSL_PORT:-8444}:8444"   # Admin API HTTPS
     volumes:
-      - ../certs/nginx/server.crt:/etc/kong/certs/server.crt:ro
-      - ../certs/nginx/server.key:/etc/kong/certs/server.key:ro
+      - ../certs/server.crt:/etc/kong/certs/server.crt:ro
+      - ../certs/server.key:/etc/kong/certs/server.key:ro
     depends_on:
       kong-db:
         condition: service_healthy
@@ -198,6 +198,7 @@ volumes:
 
 networks:
   kong-internal:
+    name: kong-internal
     driver: bridge
   kong-network:
     driver: bridge

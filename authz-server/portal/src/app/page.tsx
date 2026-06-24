@@ -8,12 +8,11 @@ interface OpaHealth {
 interface PolicyCount {
   policies: number;
   users: number;
-  apps: number;
 }
 
 export default function Dashboard() {
   const [health, setHealth] = useState<OpaHealth | null>(null);
-  const [stats, setStats] = useState<PolicyCount>({ policies: 0, users: 0, apps: 0 });
+  const [stats, setStats] = useState<PolicyCount>({ policies: 0, users: 0 });
   const [lastUpdated, setLastUpdated] = useState('');
 
   useEffect(() => {
@@ -33,15 +32,7 @@ export default function Dashboard() {
         const rolesData = rolesRes.result;
         const userCount = rolesData?.users ? Object.keys(rolesData.users).length : 0;
 
-        const appSet = new Set<string>();
-        if (rolesData?.users) {
-          Object.values(rolesData.users).forEach((u: unknown) => {
-            const user = u as { apps?: Record<string, unknown> };
-            if (user.apps) Object.keys(user.apps).forEach(a => appSet.add(a));
-          });
-        }
-
-        setStats({ policies: policyCount, users: userCount, apps: appSet.size });
+        setStats({ policies: policyCount, users: userCount });
         setLastUpdated(new Date().toLocaleTimeString());
       } catch {
         setHealth({ opa: 'offline' });
@@ -61,7 +52,6 @@ export default function Dashboard() {
     },
     { label: 'Policies Loaded', value: stats.policies.toString(), color: 'amber', icon: '◈' },
     { label: 'Users Configured', value: stats.users.toString(), color: 'blue', icon: '⧉' },
-    { label: 'Applications', value: stats.apps.toString(), color: 'violet', icon: '⊞' },
   ];
 
   const colorClasses: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
@@ -131,7 +121,7 @@ export default function Dashboard() {
           <div className="space-y-4 text-sm text-gray-600">
             <div className="flex gap-3">
               <span className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
-              <p>User logs in via <strong>Keycloak</strong> (Auth Server :8080) and gets a JWT token</p>
+              <p>User logs in via the <strong>Seiton Platform IdP</strong> and gets a JWT token</p>
             </div>
             <div className="flex gap-3">
               <span className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>

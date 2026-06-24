@@ -38,10 +38,6 @@ echo "$(gen)" > "$SECRETS_DIR/pg-admin-password"
 echo "$(gen)" > "$SECRETS_DIR/pg-app-password"
 echo "$(gen)" > "$SECRETS_DIR/pg-platform-password"
 
-# ─── Keycloak ───
-echo "$(gen)" > "$SECRETS_DIR/keycloak-admin-password"
-echo "$(gen)" > "$SECRETS_DIR/keycloak-db-password"
-
 # ─── Redis ───
 echo "$(gen)" > "$SECRETS_DIR/redis-admin-password"
 echo "$(gen)" > "$SECRETS_DIR/redis-session-password"
@@ -65,9 +61,6 @@ echo "$(gen)" > "$SECRETS_DIR/grafana-admin-password"
 
 # ─── pgAdmin ───
 echo "$(gen)" > "$SECRETS_DIR/pgadmin-password"
-
-# ─── Platform API ───
-echo "$(gen)" > "$SECRETS_DIR/platform-api-encryption-key"
 
 # ─── Timestamp ───
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "$SECRETS_DIR/.generated"
@@ -100,13 +93,6 @@ PGADMIN_EMAIL=admin@local.dev
 PGADMIN_PASSWORD=$(cat "$SECRETS_DIR/pgadmin-password")
 EOF
 
-# Auth server
-cat > "$SECRETS_DIR/auth-server.env" <<EOF
-KEYCLOAK_ADMIN_USER=admin
-KEYCLOAK_ADMIN_PASSWORD=$(cat "$SECRETS_DIR/keycloak-admin-password")
-KC_DB_PASSWORD=$(cat "$SECRETS_DIR/keycloak-db-password")
-EOF
-
 # Cache server
 cat > "$SECRETS_DIR/cache-server.env" <<EOF
 REDIS_ADMIN_PASSWORD=$(cat "$SECRETS_DIR/redis-admin-password")
@@ -118,15 +104,6 @@ EOF
 cat > "$SECRETS_DIR/object-storage-server.env" <<EOF
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=$(cat "$SECRETS_DIR/minio-root-password")
-EOF
-
-# Platform API
-cat > "$SECRETS_DIR/platform-api.env" <<EOF
-PLATFORM_DB_PASSWORD=$(cat "$SECRETS_DIR/pg-platform-password")
-PG_ADMIN_PASSWORD=$(cat "$SECRETS_DIR/pg-admin-password")
-REDIS_ADMIN_PASSWORD=$(cat "$SECRETS_DIR/redis-admin-password")
-MINIO_SECRET_KEY=$(cat "$SECRETS_DIR/minio-root-password")
-KEYCLOAK_ADMIN_PASSWORD=$(cat "$SECRETS_DIR/keycloak-admin-password")
 EOF
 
 echo ""

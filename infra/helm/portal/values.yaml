@@ -18,17 +18,9 @@ resources:
     cpu: "500m"
 
 env:
-  platformApiUrl: http://platform-api:3020
   kafkaPortalUrl: http://kafka-portal:3001
   redisPortalUrl: http://redis-portal:3002
   minioPortalUrl: http://minio-portal:3004
-
-sso:
-  enabled: false
-  keycloakIssuer: ""
-  clientId: gateway-portal
-  clientSecret: ""
-  nextauthSecret: ""
 
 ingress:
   enabled: false

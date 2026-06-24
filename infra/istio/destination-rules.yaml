@@ -34,19 +34,3 @@ spec:
       consecutive5xxErrors: 3
       interval: 10s
       baseEjectionTime: 30s
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: platform-api-retry
-  namespace: idp-prod
-spec:
-  host: platform-api
-  trafficPolicy:
-    connectionPool:
-      http:
-        maxRequestsPerConnection: 100
-    outlierDetection:
-      consecutiveGatewayErrors: 3
-      interval: 15s
-      baseEjectionTime: 15s

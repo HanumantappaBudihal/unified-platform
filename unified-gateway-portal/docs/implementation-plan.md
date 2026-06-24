@@ -286,7 +286,7 @@ Most sub-pages embed the original portal pages via iframe. This means:
 - Does NOT duplicate any backend logic (no Kafka/Redis/MinIO client code)
 - Does NOT replace individual portals (they still work standalone at their original ports)
 - Does NOT require all 3 servers to be running (gracefully shows "offline")
-- Does NOT add authentication (that's Priority 2 — Keycloak SSO)
+- Does NOT add authentication (portals run open in dev for now)
 - Does NOT modify any existing portal code
 
 ## Port Summary (Complete Infrastructure)

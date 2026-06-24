@@ -26,8 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: platform-api
-            context: ./platform-api
           - name: portal
             context: ./unified-gateway-portal/portal
     steps:

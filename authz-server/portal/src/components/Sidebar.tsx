@@ -9,13 +9,8 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: '◉' },
   { href: '/policies', label: 'Policies', icon: '◈' },
   { href: '/roles', label: 'Roles & Users', icon: '⧉' },
-  { href: '/apps', label: 'Applications', icon: '⊞' },
   { href: '/playground', label: 'Playground', icon: '▶' },
   { href: '/audit', label: 'Decision Log', icon: '≡' },
-];
-
-const externalLinks: NavItem[] = [
-  { href: '/keycloak', label: 'Keycloak Admin', icon: '⟶' },
 ];
 
 export default function Sidebar() {
@@ -81,29 +76,6 @@ export default function Sidebar() {
           ))}
         </div>
 
-        <div className="mt-6">
-          <div className="mx-3 px-3 py-1.5">
-            <span className="text-[10px] font-bold tracking-widest text-gray-400">
-              ⟶ EXTERNAL
-            </span>
-          </div>
-          <div className="mt-1 space-y-0.5">
-            {externalLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 mx-3 px-3 py-2 rounded-lg text-[13px] transition-all ${
-                  isActive(item.href)
-                    ? 'bg-gray-200 text-gray-900 font-medium'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-                }`}
-              >
-                <span className="text-xs opacity-60">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
       </nav>
 
       {/* Footer */}

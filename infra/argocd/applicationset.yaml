@@ -29,14 +29,10 @@ spec:
                   chart: infra/helm/kafka
                 - service: minio
                   chart: infra/helm/minio
-                - service: keycloak
-                  chart: infra/helm/keycloak
                 - service: opa
                   chart: infra/helm/opa
                 - service: kong
                   chart: infra/helm/kong
-                - service: platform-api
-                  chart: infra/helm/platform-api
                 - service: portal
                   chart: infra/helm/portal
   template:

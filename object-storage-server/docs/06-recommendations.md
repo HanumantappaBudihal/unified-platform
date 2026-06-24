@@ -36,18 +36,17 @@ environment:
 
 ---
 
-## Priority 2 — Keycloak SSO Integration
+## Priority 2 — Portal SSO Integration
 
 **Problem**: All portals (Kafka, Redis, MinIO) have no authentication. Anyone on the network can access them.
 
-**Solution**: Integrate with existing Keycloak instance (`E:\3.Logic Brackets\keycloak`).
+**Solution**: Integrate the portals with an external OIDC identity provider.
 
 **Implementation**:
-1. Create a realm for infrastructure services
-2. Register each portal as an OIDC client
-3. Add NextAuth.js to each portal with Keycloak provider
-4. Configure Grafana OIDC auth to use Keycloak
-5. Configure MinIO Console to use Keycloak OIDC
+1. Register each portal as an OIDC client with the identity provider
+2. Add NextAuth.js to each portal with the OIDC provider
+3. Configure Grafana OIDC auth
+4. Configure MinIO Console to use OIDC
 
 **Benefits**:
 - Single login across all portals
@@ -301,7 +300,7 @@ jobs:
 | # | Improvement | Effort | Impact | Status |
 |---|---|---|---|---|
 | 1 | Secrets Management (.env) | Low | High | Pending |
-| 2 | Keycloak SSO | Medium | High | Pending |
+| 2 | Portal SSO | Medium | High | Pending |
 | 3 | Unified Gateway Portal | Medium | High | Pending |
 | 4 | Centralized Logging (Loki) | Low | High | Pending |
 | 5 | TLS/HTTPS | Medium | High | Pending |

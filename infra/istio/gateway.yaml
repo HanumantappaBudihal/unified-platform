@@ -15,8 +15,6 @@ spec:
         protocol: HTTP
       hosts:
         - portal.platform.example.com
-        - api.platform.example.com
-        - auth.platform.example.com
         - grafana.platform.example.com
       tls:
         httpsRedirect: true
@@ -26,8 +24,6 @@ spec:
         protocol: HTTPS
       hosts:
         - portal.platform.example.com
-        - api.platform.example.com
-        - auth.platform.example.com
         - grafana.platform.example.com
       tls:
         mode: SIMPLE
@@ -50,37 +46,3 @@ spec:
             host: portal
             port:
               number: 3000
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: idp-api-external
-  namespace: idp-prod
-spec:
-  hosts:
-    - api.platform.example.com
-  gateways:
-    - idp-gateway
-  http:
-    - route:
-        - destination:
-            host: platform-api
-            port:
-              number: 3020
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: idp-auth-external
-  namespace: idp-prod
-spec:
-  hosts:
-    - auth.platform.example.com
-  gateways:
-    - idp-gateway
-  http:
-    - route:
-        - destination:
-            host: keycloak
-            port:
-              number: 8080

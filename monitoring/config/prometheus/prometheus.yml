@@ -4,7 +4,6 @@ global:
 
 rule_files:
   - /etc/prometheus/alert-rules.yml
-  - /etc/prometheus/slo-rules.yml
 
 alerting:
   alertmanagers:
@@ -73,19 +72,3 @@ scrape_configs:
       - targets: ['postgres-exporter:9187']
         labels:
           service: postgres
-
-  # ─── Keycloak ───
-  - job_name: keycloak
-    metrics_path: /metrics
-    static_configs:
-      - targets: ['auth-keycloak:8080']
-        labels:
-          service: keycloak
-
-  # ─── Platform API (per-tenant golden signals) ───
-  - job_name: platform-api
-    metrics_path: /metrics
-    static_configs:
-      - targets: ['platform-api:3020']
-        labels:
-          service: platform

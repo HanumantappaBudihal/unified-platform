@@ -34,8 +34,6 @@ Mailpit acts as a local SMTP server that **captures all outgoing emails** instea
 ```
 Your App ──SMTP──▶ Mailpit (:1025) ──captures──▶ Web UI (:8025)
                         │
-Keycloak ──SMTP──▶──────┘
-                        │
 Alertmanager ─SMTP─▶────┘
 ```
 
@@ -104,8 +102,6 @@ networks:
 
 | Service | SMTP Host | From Address | Purpose |
 |---------|-----------|-------------|---------|
-| Keycloak (applications realm) | `email-mailpit:1025` | `noreply@applications.local` | Password resets, verification emails |
-| Keycloak (infrastructure realm) | `email-mailpit:1025` | `noreply@infrastructure.local` | Admin notifications |
 | Alertmanager (Kafka) | `email-mailpit:1025` | `kafka-alerts@infrastructure.local` | Kafka alert notifications |
 | Alertmanager (Cache) | `email-mailpit:1025` | `cache-alerts@infrastructure.local` | Redis alert notifications |
 | Alertmanager (Storage) | `email-mailpit:1025` | `minio-alerts@infrastructure.local` | MinIO alert notifications |

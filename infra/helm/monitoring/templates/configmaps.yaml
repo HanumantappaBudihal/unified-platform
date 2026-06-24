@@ -33,10 +33,6 @@ data:
       - job_name: postgres
         static_configs:
           - targets: ['postgres-exporter:9187']
-      - job_name: platform-api
-        metrics_path: /api/v1/health
-        static_configs:
-          - targets: ['platform-api:3020']
   alert-rules.yml: |
     groups:
       - name: platform

@@ -112,33 +112,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Platform Quick Actions */}
-      <div className="mb-8 p-5 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-2xl">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Platform</h2>
-            <p className="text-xs text-gray-500">Self-service app onboarding & management</p>
-          </div>
-          <Link
-            href="/apps/new"
-            className="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
-          >
-            + Onboard New App
-          </Link>
-        </div>
-        <div className="flex gap-3">
-          <Link href="/apps" className="px-3 py-1.5 bg-white border border-violet-200 text-violet-700 text-xs font-medium rounded-lg hover:bg-violet-50">
-            All Apps
-          </Link>
-          <Link href="/teams" className="px-3 py-1.5 bg-white border border-violet-200 text-violet-700 text-xs font-medium rounded-lg hover:bg-violet-50">
-            Teams
-          </Link>
-          <Link href="/audit" className="px-3 py-1.5 bg-white border border-violet-200 text-violet-700 text-xs font-medium rounded-lg hover:bg-violet-50">
-            Audit Log
-          </Link>
-        </div>
-      </div>
-
       {/* Server Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 mb-8">
         {servers.map((s, i) => (

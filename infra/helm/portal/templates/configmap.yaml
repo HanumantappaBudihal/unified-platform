@@ -5,7 +5,6 @@ metadata:
   labels:
     app: {{ .Release.Name }}-portal
 data:
-  PLATFORM_API_URL: {{ .Values.env.platformApiUrl | quote }}
   KAFKA_PORTAL_URL: {{ .Values.env.kafkaPortalUrl | quote }}
   REDIS_PORTAL_URL: {{ .Values.env.redisPortalUrl | quote }}
   MINIO_PORTAL_URL: {{ .Values.env.minioPortalUrl | quote }}

@@ -2,23 +2,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import TenantBadge from './TenantBadge';
 
 interface NavItem { href: string; label: string; icon: string }
 interface NavSection { title: string; color: string; icon: string; items: NavItem[] }
-
-const platformSection: NavSection = {
-  title: 'PLATFORM',
-  color: 'violet',
-  icon: '◈',
-  items: [
-    { href: '/apps', label: 'Applications', icon: '▦' },
-    { href: '/apps/new', label: 'Onboard App', icon: '+' },
-    { href: '/billing', label: 'Billing & Usage', icon: '$' },
-    { href: '/teams', label: 'Teams', icon: '⧉' },
-    { href: '/audit', label: 'Audit Log', icon: '⊟' },
-  ],
-};
 
 const sections: NavSection[] = [
   {
@@ -160,36 +146,6 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
-        {/* Platform Section */}
-        {(() => {
-          const colors = colorMap[platformSection.color];
-          return (
-            <div className="mt-5">
-              <div className={`mx-3 px-3 py-1.5 rounded-md flex items-center justify-between ${colors.headingBg}`}>
-                <span className={`text-[10px] font-bold tracking-widest ${colors.heading}`}>
-                  {platformSection.icon} {platformSection.title}
-                </span>
-              </div>
-              <div className="mt-1 space-y-0.5">
-                {platformSection.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 mx-3 px-3 py-2 rounded-lg text-[13px] transition-all ${
-                      isActive(item.href)
-                        ? `${colors.activeBg} ${colors.active} font-medium`
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className="text-xs opacity-60">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Server Sections */}
         {sections.map((section) => {
           const colors = colorMap[section.color];
@@ -253,7 +209,6 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
-        <TenantBadge />
         <div className="flex items-center gap-3 px-2">
           <div className="relative">
             <span className={`block w-2.5 h-2.5 rounded-full ${

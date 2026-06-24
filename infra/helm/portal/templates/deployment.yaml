@@ -32,29 +32,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-portal-config
-          {{- if .Values.sso.enabled }}
-          env:
-            - name: KEYCLOAK_ISSUER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-portal-sso
-                  key: keycloak-issuer
-            - name: KEYCLOAK_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-portal-sso
-                  key: client-id
-            - name: KEYCLOAK_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-portal-sso
-                  key: client-secret
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-portal-sso
-                  key: nextauth-secret
-          {{- end }}
           securityContext:
             readOnlyRootFilesystem: true
           volumeMounts:

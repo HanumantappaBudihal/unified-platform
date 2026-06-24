@@ -1,5 +1,5 @@
 ---
-# PostgreSQL: only Platform API and Keycloak can connect
+# PostgreSQL: in-namespace workloads can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,12 +12,7 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app: platform-api
-        - podSelector:
-            matchLabels:
-              app: keycloak
+        - podSelector: {}
       ports:
         - port: 5432
     # Allow Prometheus scraping
@@ -28,7 +23,7 @@ spec:
       ports:
         - port: 9187
 ---
-# Redis: only Platform API can connect
+# Redis: in-namespace workloads can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -41,9 +36,7 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app: platform-api
+        - podSelector: {}
       ports:
         - port: 6379
     - from:
@@ -53,7 +46,7 @@ spec:
       ports:
         - port: 9121
 ---
-# Kafka: only Platform API can connect
+# Kafka: in-namespace workloads can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -66,9 +59,7 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app: platform-api
+        - podSelector: {}
       ports:
         - port: 9092
     - from:
@@ -79,7 +70,7 @@ spec:
         - port: 9308
         - port: 7071
 ---
-# MinIO: only Platform API can connect
+# MinIO: in-namespace workloads can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -92,9 +83,7 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app: platform-api
+        - podSelector: {}
       ports:
         - port: 9000
     - from:

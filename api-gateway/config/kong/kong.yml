@@ -73,14 +73,6 @@ services:
         strip_path: true
 
   # ── Core Infrastructure APIs ──
-  - name: keycloak
-    url: http://host.docker.internal:8080
-    tags: [auth, core]
-    routes:
-      - name: keycloak-route
-        paths: [/auth]
-        strip_path: true
-
   - name: opa
     url: http://host.docker.internal:8181
     tags: [authz, core]
@@ -161,7 +153,7 @@ plugins:
   # ── IP Restriction (allow all by default, customize per route) ──
   # Uncomment to restrict Admin API access:
   # - name: ip-restriction
-  #   service: keycloak
+  #   service: opa
   #   config:
   #     allow: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]
 

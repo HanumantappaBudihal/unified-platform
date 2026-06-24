@@ -80,9 +80,6 @@ echo ""
 
 # ─── Core APIs ───
 echo "── Core Infrastructure APIs ──"
-create_service "keycloak" "http://host.docker.internal:8080" "auth"
-create_route "keycloak" "keycloak-route" "/auth" false
-
 create_service "opa" "http://host.docker.internal:8181" "authz"
 create_route "opa" "opa-route" "/authz"
 
@@ -192,26 +189,6 @@ curl -sf -X POST "$KONG_ADMIN/services/opa/plugins" \
 
 echo ""
 
-# ─── JWT Plugin for Portal Auth (Keycloak) ───
-echo "── Keycloak JWT Authentication ──"
-echo "  To enable JWT validation on portals, run:"
-echo ""
-echo "  # Get Keycloak JWKS endpoint"
-echo "  JWKS_URI=http://host.docker.internal:8080/realms/infrastructure/protocol/openid-connect/certs"
-echo ""
-echo "  # Enable OpenID Connect plugin per service:"
-echo "  curl -X POST $KONG_ADMIN/services/gateway-portal/plugins \\"
-echo "    -H 'Content-Type: application/json' \\"
-echo "    -d '{"
-echo "      \"name\": \"openid-connect\","
-echo "      \"config\": {"
-echo "        \"issuer\": \"http://host.docker.internal:8080/realms/infrastructure\","
-echo "        \"client_id\": [\"gateway-portal\"],"
-echo "        \"auth_methods\": [\"bearer\"]"
-echo "      }"
-echo "    }'"
-echo ""
-
 # ─── Summary ───
 echo "═══════════════════════════════════════"
 echo " Setup Complete"
@@ -230,7 +207,6 @@ echo "   /portal/authz     → AuthZ Portal (:3008)"
 echo "   /grafana/kafka    → Grafana Kafka (:3000)"
 echo "   /grafana/cache    → Grafana Cache (:3003)"
 echo "   /grafana/storage  → Grafana Storage (:3005)"
-echo "   /auth/*           → Keycloak (:8080)"
 echo "   /authz/*          → OPA (:8181)"
 echo "   /s3/*             → MinIO S3 (:9000)"
 echo "   /schema-registry  → Schema Registry (:8081)"

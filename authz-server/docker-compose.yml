@@ -57,7 +57,6 @@ services:
       - "${AUTHZ_PORTAL_PORT:-3012}:3000"
     environment:
       OPA_URL: http://authz-opa:8181
-      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://host.docker.internal:8080}
     depends_on:
       authz-opa:
         condition: service_healthy

@@ -1,6 +1,6 @@
 # Email Server
 
-Local SMTP server (Mailpit) for capturing and inspecting emails during development. Used by Keycloak, Alertmanager, and application services.
+Local SMTP server (Mailpit) for capturing and inspecting emails during development. Used by Alertmanager and application services.
 
 ## Quick Start
 
@@ -45,6 +45,5 @@ The email server creates the `email-network`. Start it **before** services that 
 
 ```bash
 cd email-server && docker compose up -d    # 1. Email (creates network)
-cd auth-server && docker compose up -d     # 2. Keycloak (password resets)
-# ... other services
+# ... other services that send email
 ```

@@ -15,7 +15,6 @@ This document captures all identified gaps between the current Docker Compose-ba
 | event-streaming-server | Kafka (KRaft), Schema Registry, REST Proxy, Kafka UI, Portal | Running |
 | cache-server | Redis Cluster (6 nodes), RedisInsight, Portal | Running |
 | object-storage-server | MinIO (4 nodes), Nginx LB, Portal | Running |
-| auth-server | Keycloak 24.0, PostgreSQL 16 | Running |
 | authz-server | OPA, Portal | Running |
 | centralized-logging | Loki, Promtail, Grafana, Portal | Running |
 | api-gateway | Kong 3.9, Konga UI, PostgreSQL | Running |
@@ -53,7 +52,6 @@ deploy:
 | Kafka broker | 2.0 | 4G |
 | Redis node | 0.5 | 512M |
 | MinIO node | 1.0 | 2G |
-| Keycloak | 1.0 | 1G |
 | PostgreSQL | 1.0 | 1G |
 | OPA | 0.5 | 512M |
 | Loki | 1.0 | 1G |
@@ -74,20 +72,6 @@ deploy:
 
 ---
 
-### 3. Keycloak Running in Development Mode
-
-**Impact:** Not optimized for production. HTTP enabled alongside HTTPS. No caching optimizations.
-
-**Current:** `command: start-dev --import-realm`, `KC_HTTP_ENABLED: "true"`
-
-**Fix:**
-- Change to `command: start --import-realm`
-- Set `KC_HTTP_ENABLED: "false"`
-- Set `KC_PROXY: edge` (if behind reverse proxy)
-- Set `KC_HOSTNAME` to actual domain
-
----
-
 ### 4. Weak Default Passwords
 
 **Impact:** Easily compromised credentials across all services.
@@ -95,8 +79,7 @@ deploy:
 **Current passwords in .env files:**
 - `admin123` (Kafka UI, Grafana)
 - `admin-secret` (Redis, MinIO)
-- `keycloak-db-secret` (PostgreSQL)
-- `admin` (Keycloak admin)
+- `kong-db-secret` (Kong PostgreSQL)
 
 **Fix:** Generate strong unique passwords (32+ chars, mixed case, numbers, symbols). Use a password manager or secrets vault.
 
@@ -118,13 +101,13 @@ deploy:
 
 ### 6. No PostgreSQL Backup
 
-**Impact:** Keycloak auth database not included in backup schedule. Full auth data loss on failure.
+**Impact:** Kong's PostgreSQL database not included in backup schedule. Full config/data loss on failure.
 
 **Current:** backup-server backs up Redis, MinIO, Kafka — but not PostgreSQL.
 
 **Fix:** Add `backup-postgres.sh` to backup-runner:
 ```bash
-pg_dump -h auth-postgres -U keycloak keycloak > /backup/data/postgres/auth-$(date +%Y%m%d_%H%M%S).sql
+pg_dump -h kong-postgres -U kong kong > /backup/data/postgres/kong-$(date +%Y%m%d_%H%M%S).sql
 ```
 Schedule: Daily at 1:00 AM, 30-day retention.
 
@@ -137,7 +120,6 @@ Schedule: Daily at 1:00 AM, 30-day retention.
 **Impact:** Services won't auto-recover from crashes.
 
 **Affected:**
-- `auth-server/docker-compose.yml` — auth-postgres, auth-keycloak
 - `authz-server/docker-compose.yml` — authz-opa, authz-portal
 
 **Fix:** Add `restart: unless-stopped` to all services.
@@ -180,7 +162,7 @@ GF_AUTH_ANONYMOUS_ENABLED=true
 GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
 ```
 
-**Fix:** Disable anonymous access and integrate with Keycloak OIDC:
+**Fix:** Disable anonymous access and integrate with an external OIDC provider:
 ```
 GF_AUTH_ANONYMOUS_ENABLED=false
 GF_AUTH_GENERIC_OAUTH_ENABLED=true
@@ -269,7 +251,7 @@ GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
 
 **Impact:** All 6 portals (Gateway, Kafka, Cache, Storage, AuthZ, Logging) have zero authentication. Anyone with network access can manage infrastructure.
 
-**Fix:** Integrate NextAuth.js with Keycloak OIDC provider in each portal. Keycloak clients already configured in `infrastructure` realm.
+**Fix:** Integrate NextAuth.js with an external OIDC provider in each portal. (Portal auth is currently removed — portals run open/dev.)
 
 ---
 
@@ -309,7 +291,7 @@ GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
 
 ### 23. PostgreSQL Replication
 
-**Why:** Auth database is a single instance. Keycloak is unusable if PostgreSQL fails.
+**Why:** Kong's database is a single instance. The API gateway is unusable if PostgreSQL fails.
 
 **Fix:** PostgreSQL streaming replication (primary + standby) or use Patroni for automatic failover.
 
@@ -344,7 +326,7 @@ GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
 
 ### Week 1 (Immediate)
 - [ ] Add resource limits to all docker-compose services (#1)
-- [ ] Add restart policies to auth-server, authz-server (#7)
+- [ ] Add restart policies to authz-server (#7)
 - [ ] Add PostgreSQL backup to backup-runner (#6)
 - [ ] Configure Alertmanager notifications (#8)
 
@@ -357,7 +339,6 @@ GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
 - [ ] Wire SSO into all portals via NextAuth.js (#18)
 
 ### Month 2 (Medium-term)
-- [ ] Switch Keycloak to production mode (#3)
 - [ ] Implement secrets management — Vault or SOPS (#5)
 - [ ] Scale Kafka to 3 brokers with RF=3 (#2, #22)
 - [ ] Add PostgreSQL replication (#23)
@@ -382,7 +363,6 @@ GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
 - [x] Centralized logging — Loki + Promtail
 - [x] Health monitoring — Uptime Kuma
 - [x] Backup scheduling — Redis (6h), MinIO (daily), Kafka (daily)
-- [x] Auth server — Keycloak with 2 realms (infrastructure + applications)
 - [x] AuthZ server — OPA with policies for infra + task management
 - [x] Monitoring & alerting — Prometheus + Grafana + 84 alert rules
 - [x] Redis ACL — Per-service user accounts with namespace isolation

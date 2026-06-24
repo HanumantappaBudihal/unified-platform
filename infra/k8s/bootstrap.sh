@@ -124,7 +124,7 @@ if [ "$INSTALL_ARGOCD" = false ]; then
   echo ""
   echo "→ Installing services via Helm..."
 
-  SERVICES=(postgres redis kafka minio keycloak opa kong platform-api portal)
+  SERVICES=(postgres redis kafka minio opa kong portal)
 
   for svc in "${SERVICES[@]}"; do
     echo "  Installing $svc..."
@@ -165,8 +165,6 @@ echo "  IDP Platform deployed to $NAMESPACE"
 echo ""
 echo "  Access points:"
 echo "    Portal:     kubectl port-forward svc/portal 3006:3000 -n $NAMESPACE"
-echo "    API:        kubectl port-forward svc/platform-api 3020:3020 -n $NAMESPACE"
-echo "    Keycloak:   kubectl port-forward svc/keycloak 8080:8080 -n $NAMESPACE"
 echo "    Grafana:    kubectl port-forward svc/monitoring-grafana 3050:3000 -n idp-monitoring"
 echo "    Kong:       kubectl port-forward svc/kong-proxy 8000:8000 -n $NAMESPACE"
 if [ "$INSTALL_ARGOCD" = true ]; then

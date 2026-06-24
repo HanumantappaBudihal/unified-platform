@@ -1,6 +1,0 @@
-apiVersion: v2
-name: platform-api
-description: Platform API - orchestrates app onboarding across all services
-version: 1.0.0
-appVersion: "1.0.0"
-type: application

@@ -1,16 +1,16 @@
-# Crossplane control-plane spike (Phase 2 de-risk)
+# Crossplane provisioning spike
 
-Proves the central [PRODUCT-ROADMAP.md](../../../PRODUCT-ROADMAP.md) pivot: replacing the
-imperative per-app orchestrators (`platform-api/src/orchestrators/*`) with a **declarative,
-reconciled** Kubernetes-native control plane.
+Proves a **declarative, reconciled** Kubernetes-native approach to provisioning
+backing infrastructure (databases, roles, grants) in place of imperative,
+script-driven provisioning.
 
 ## What it demonstrated (validated 2026-06-13 on kind + Crossplane 2.3.2)
 
 1. **Crossplane installs and runs** on a vanilla cluster (`helm install crossplane`).
 2. **provider-sql** installs, becomes `Healthy`, and exposes `Database`/`Role`/`Grant` CRDs.
 3. A declarative `Database` resource reconciles to `Synced=True / Ready=True` and a **real
-   `acme_billing_db` is created** in the target Postgres — i.e. the same outcome as
-   [postgres.js](../../../platform-api/src/orchestrators/postgres.js), but declarative.
+   `acme_billing_db` is created** in the target Postgres — the same outcome as an imperative
+   provisioning script, but declarative and self-healing.
 4. **Self-healing**: dropping the database out-of-band (drift) → Crossplane recreates it on
    the next reconcile. Imperative scripts cannot do this.
 

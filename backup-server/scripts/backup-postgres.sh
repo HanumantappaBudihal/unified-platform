@@ -1,6 +1,6 @@
 #!/bin/bash
 # ─── PostgreSQL Backup ───
-# Backs up all PostgreSQL databases (Keycloak auth, platform registry, app databases)
+# Backs up all PostgreSQL databases (app databases)
 # Retention: 30 days
 
 set -e

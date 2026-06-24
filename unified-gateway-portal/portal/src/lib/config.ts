@@ -1,5 +1,4 @@
 export const config = {
-  platformApi: process.env.PLATFORM_API_URL || 'http://localhost:3020',
   portals: {
     kafka: process.env.KAFKA_PORTAL_URL || 'http://localhost:3001',
     redis: process.env.REDIS_PORTAL_URL || 'http://localhost:3002',

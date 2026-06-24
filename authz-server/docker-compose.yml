@@ -57,6 +57,12 @@ services:
       - "${AUTHZ_PORTAL_PORT:-3012}:3000"
     environment:
       OPA_URL: http://authz-opa:8181
+      # Seiton Platform IdP (OIDC). Empty issuer/client → portal runs open (dev).
+      PLATFORM_ISSUER: ${PLATFORM_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-authz-portal}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3012}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-}
     depends_on:
       authz-opa:
         condition: service_healthy

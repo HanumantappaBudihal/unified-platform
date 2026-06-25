@@ -12,9 +12,21 @@ function csv(value, fallback) {
 const config = {
   port: parseInt(process.env.PORT || '3030', 10),
 
-  // Bearer token that callers (Seiton Platform) must present. When unset the
-  // service logs a loud warning and runs open — intended for local dev only.
+  // Legacy static bearer token. Used ONLY when Platform introspection is not
+  // configured (see `platform` below). When both are unset the service runs open
+  // and logs a loud warning — intended for local dev only.
   apiToken: process.env.PROVISIONING_API_TOKEN || '',
+
+  // Seiton Platform token validation (RFC 7662 introspection). When introspectUrl
+  // + clientId + clientSecret are set, every call must carry a Platform-issued
+  // Bearer token that introspects active and carries the required scope. This
+  // supersedes the static apiToken above.
+  platform: {
+    introspectUrl: process.env.PLATFORM_INTROSPECT_URL || '',
+    clientId: process.env.PLATFORM_CLIENT_ID || '',
+    clientSecret: process.env.PLATFORM_CLIENT_SECRET || '',
+    requiredScope: process.env.PLATFORM_REQUIRED_SCOPE || 'infra.provision',
+  },
 
   // Which resource types this deployment is allowed to provision. Lets an
   // environment disable a backing service it does not run.

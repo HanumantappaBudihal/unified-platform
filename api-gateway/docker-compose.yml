@@ -75,9 +75,9 @@ services:
       # KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
     ports:
       - "${KONG_PROXY_PORT:-8000}:8000"       # HTTP proxy
-      - "${KONG_PROXY_SSL_PORT:-8444}:8443"   # HTTPS proxy
+      - "${KONG_PROXY_SSL_PORT:-8543}:8443"   # HTTPS proxy (remapped from 8444 — was colliding with admin SSL)
       - "${KONG_ADMIN_PORT:-8001}:8001"       # Admin API
-      - "${KONG_ADMIN_SSL_PORT:-8444}:8444"   # Admin API HTTPS
+      - "${KONG_ADMIN_SSL_PORT:-8544}:8444"   # Admin API HTTPS (remapped from 8444)
     volumes:
       - ../certs/server.crt:/etc/kong/certs/server.crt:ro
       - ../certs/server.key:/etc/kong/certs/server.key:ro

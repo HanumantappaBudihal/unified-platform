@@ -114,6 +114,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+      - /root
     security_opt:
       - no-new-privileges:true
     deploy:

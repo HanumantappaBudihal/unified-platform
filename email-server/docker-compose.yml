@@ -41,5 +41,7 @@ volumes:
 
 networks:
   email-network:
-    driver: bridge
+    # Shared with auth-keycloak / alertmanager (they send mail to mailpit).
+    # Reuse the existing network rather than letting compose try to own it.
+    external: true
     name: email-network

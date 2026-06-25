@@ -34,15 +34,19 @@ services:
         RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
             -o /usr/local/bin/mc && chmod +x /usr/local/bin/mc
 
-        # Install Kafka CLI tools
-        RUN wget -qO- https://downloads.apache.org/kafka/3.9.0/kafka_2.13-3.9.0.tgz \
+        # Install Kafka CLI tools. Use archive.apache.org — downloads.apache.org
+        # only serves current releases and 404s for 3.9.0 (causing a tar error).
+        RUN wget -qO- https://archive.apache.org/dist/kafka/3.9.0/kafka_2.13-3.9.0.tgz \
             | tar xz -C /opt && ln -s /opt/kafka_2.13-3.9.0 /opt/kafka
 
         # Install OpenJDK (required for Kafka CLI)
         RUN apt-get update && apt-get install -y openjdk-17-jre-headless \
             && rm -rf /var/lib/apt/lists/*
 
-        ENV PATH="/opt/kafka/bin:${PATH}"
+        # NOTE: $$ escapes Compose interpolation so the literal ${PATH} reaches
+        # the Dockerfile. With a single $, Compose substitutes the host's
+        # (Windows) PATH, wiping the image's Linux bin dirs (no sh/bash found).
+        ENV PATH="/opt/kafka/bin:$${PATH}"
 
         WORKDIR /backup
     container_name: backup-runner
@@ -68,9 +72,8 @@ services:
       - kafka-network
     entrypoint: >
       bash -c "
-        chmod 0644 /etc/cron.d/backup-schedule &&
-        crontab /etc/cron.d/backup-schedule &&
-        echo 'Backup runner started — cron is active.' &&
+        chmod 0644 /etc/cron.d/backup-schedule 2>/dev/null || true;
+        echo 'Backup runner started — cron is active.';
         cron -f
       "
     restart: unless-stopped

@@ -5,7 +5,7 @@ echo "=== Waiting for MinIO to be ready ==="
 sleep 10
 
 echo "=== Configuring MinIO client ==="
-mc alias set storage http://storage-nginx:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
+mc alias set storage http://minio-1:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
 
 echo "=== Creating application buckets ==="
 mc mb --ignore-existing storage/document-svc

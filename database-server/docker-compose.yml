@@ -28,7 +28,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "${PG_PORT:-5432}:5432"
+      - "${PG_PORT:-5434}:5432"   # host 5434 (5432 used by Seiton-Platform's postgres)
     networks:
       - db-internal
       - db-network
